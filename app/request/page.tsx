@@ -101,7 +101,7 @@ function RequestForm() {
         </div>
         <h2 style={{ fontSize: 32, marginBottom: 12 }}>Your request is on its way!</h2>
         <p style={{ color: "var(--ink-soft)", maxWidth: 440, margin: "0 auto 32px", fontSize: 16 }}>
-          {author ? `${author.name} typically responds in ${author.typical_response_days}–${(author.typical_response_days ?? 2) + 1} days.` : "Matched authors will reach out within 2–3 days."} You'll get a confirmation email at <strong>{form.requester_email}</strong>.
+          {author ? `${author.name} will be in touch soon.` : "Matched authors will reach out within 2–3 days."} You'll get a confirmation email at <strong>{form.requester_email}</strong>.
         </p>
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/authors" className="btn btn-primary">Browse more authors</Link>
