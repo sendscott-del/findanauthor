@@ -55,6 +55,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) throw error;
+
+    // Non-blocking confirmation emails
+    try {
+      const { sendApplicationReceived } = await import("@/lib/email");
+      await sendApplicationReceived(body.name, body.email, publisherApproved);
+    } catch {}
+
     return NextResponse.json({ ok: true, auto_check_passed: publisherApproved });
   } catch (e: any) {
     console.error(e);

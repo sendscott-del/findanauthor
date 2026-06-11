@@ -33,6 +33,12 @@ export async function POST(req: NextRequest) {
       status: "pending",
     });
     if (error) throw error;
+
+    try {
+      const { sendRequestReceived } = await import("@/lib/email");
+      await sendRequestReceived(body.requester_name, body.requester_email, body.school_name);
+    } catch {}
+
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     console.error(e);
