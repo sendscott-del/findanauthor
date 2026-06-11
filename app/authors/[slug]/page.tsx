@@ -1,15 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import BookCover from "@/components/book-cover";
-import { SEED_AUTHORS } from "@/lib/seed-data";
+import { serverClient } from "@/lib/supabase";
+import { Author } from "@/lib/types";
 
-export async function generateStaticParams() {
-  return SEED_AUTHORS.map((a) => ({ slug: a.slug }));
+export const dynamic = "force-dynamic";
+
+async function getAuthor(slug: string): Promise<Author | null> {
+  const supabase = serverClient();
+  const { data } = await supabase
+    .from("wfr_authors")
+    .select("*")
+    .eq("slug", slug)
+    .eq("status", "active")
+    .single();
+  return data ?? null;
 }
 
 export default async function AuthorProfile({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const author = SEED_AUTHORS.find((a) => a.slug === slug);
+  const author = await getAuthor(slug);
   if (!author) notFound();
 
   const localOffering = author.visit_offerings?.find((o) => o.kind === "local");
@@ -31,10 +41,14 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
         {/* Header */}
         <div style={{ display: "flex", gap: 36, marginBottom: 52, alignItems: "flex-start", flexWrap: "wrap" }}>
           {/* Headshot */}
-          <div className="ph" style={{ width: 260, aspectRatio: "4/5", borderRadius: 22, flexShrink: 0, position: "relative" }}>
-            <span style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", background: "rgba(255,255,255,.6)", padding: "4px 8px", borderRadius: 4 }}>
-              Author headshot
-            </span>
+          <div style={{ width: 260, aspectRatio: "4/5", borderRadius: 22, flexShrink: 0, position: "relative", overflow: "hidden", background: "var(--paper-2)", border: "1.5px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {author.photo_url ? (
+              <img src={author.photo_url} alt={author.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase", color: "var(--ink-faint)", padding: "4px 8px" }}>
+                Author headshot
+              </span>
+            )}
             {author.offers_grant_visits && (
               <div className="badge badge-grant" style={{ position: "absolute", top: 12, left: 12 }}>
                 ★ Grant visits open
@@ -68,7 +82,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 ["Based in", `${author.location_city}, ${author.location_state}`],
                 ["Local zone", `${author.local_radius_miles} mi · no fee`],
                 ["Books published", `${author.books?.length ?? 0} titles`],
-                ["Schools visited", `${author.schools_visited}+`],
               ].map(([label, value]) => (
                 <div key={label}>
                   <div style={{ fontSize: 12, color: "var(--ink-faint)", fontWeight: 700, letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
@@ -92,18 +105,20 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
             <hr className="dotted-divider" style={{ marginBottom: 40, color: "var(--ink-faint)" }} />
 
             {/* Books */}
-            <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontSize: 24, marginBottom: 20 }}>Books</h2>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="books-grid">
-                {author.books?.map((b, i) => (
-                  <div key={i} style={{ textAlign: "center" }}>
-                    <BookCover color={b.cover_color} title={b.title} />
-                    <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 8, color: "var(--ink-soft)" }}>{b.title}</div>
-                    <div style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{b.publisher}, {b.year}</div>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {author.books?.length > 0 && (
+              <section style={{ marginBottom: 40 }}>
+                <h2 style={{ fontSize: 24, marginBottom: 20 }}>Books</h2>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="books-grid">
+                  {author.books?.map((b, i) => (
+                    <div key={i} style={{ textAlign: "center" }}>
+                      <BookCover color={b.cover_color} title={b.title} />
+                      <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 8, color: "var(--ink-soft)" }}>{b.title}</div>
+                      {b.publisher && <div style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{b.publisher}{b.year ? `, ${b.year}` : ""}</div>}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <hr className="dotted-divider" style={{ marginBottom: 40, color: "var(--ink-faint)" }} />
 
@@ -111,7 +126,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
             <section style={{ marginBottom: 40 }}>
               <h2 style={{ fontSize: 24, marginBottom: 20 }}>Visit formats</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="formats-grid">
-                {/* Local */}
                 {localOffering && (
                   <div className="card" style={{ padding: 22 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--orange)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>📍</div>
@@ -119,7 +133,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Local visit</div>
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--orange)", marginBottom: 12 }}>${localOffering.base_price} / day</div>
                     <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {localOffering.includes.map((item, i) => (
+                      {localOffering.includes?.map((item, i) => (
                         <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
                           <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
                         </li>
@@ -131,7 +145,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                   </div>
                 )}
 
-                {/* Out of area */}
                 {outOffering && (
                   <div className="card" style={{ padding: 22, borderColor: "#EBC9AE" }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--orange-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>🧳</div>
@@ -139,7 +152,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Out-of-area visit</div>
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--orange)", marginBottom: 12 }}>${outOffering.base_price} / day + travel</div>
                     <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {outOffering.includes.map((item, i) => (
+                      {outOffering.includes?.map((item, i) => (
                         <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
                           <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
                         </li>
@@ -151,7 +164,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                   </div>
                 )}
 
-                {/* Virtual */}
                 {virtualOffering && (
                   <div className="card" style={{ padding: 22 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>💻</div>
@@ -159,7 +171,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Virtual visit</div>
                     <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--blue)", marginBottom: 12 }}>${virtualOffering.base_price} / session</div>
                     <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {virtualOffering.includes.map((item, i) => (
+                      {virtualOffering.includes?.map((item, i) => (
                         <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
                           <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
                         </li>
@@ -188,7 +200,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
               </div>
             </section>
 
-            {/* Grant expectations */}
+            {/* Grant section */}
             {author.offers_grant_visits && (
               <>
                 <hr className="dotted-divider" style={{ marginBottom: 40, color: "var(--ink-faint)" }} />
@@ -196,10 +208,10 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                   <div style={{ background: "var(--green-tint)", border: "1.5px solid #BBDDD0", borderRadius: 22, padding: 28 }}>
                     <div className="eyebrow" style={{ color: "var(--green-deep)", marginBottom: 12 }}>Volunteer visits</div>
                     <h2 style={{ fontSize: 22, marginBottom: 6 }}>
-                      {author.name?.split(" ")[0]} offers {author.grant_visits_total} free visits a year
+                      {author.name?.split(" ")[0]} offers {author.grant_visits_per_year ?? author.grant_visits_remaining} free visits a year
                     </h2>
                     <p style={{ color: "var(--ink-soft)", marginBottom: 20, fontSize: 15 }}>
-                      {author.grant_visits_remaining} of {author.grant_visits_total} remaining this year. Qualifying schools receive a fully-funded in-person or virtual visit.
+                      {author.grant_visits_remaining} remaining this year. Qualifying schools receive a fully-funded in-person or virtual visit.
                     </p>
                     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                       {[
@@ -218,28 +230,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 </section>
               </>
             )}
-
-            {/* Availability */}
-            <hr className="dotted-divider" style={{ marginBottom: 40, color: "var(--ink-faint)" }} />
-            <section>
-              <h2 style={{ fontSize: 24, marginBottom: 18 }}>Availability</h2>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {Object.entries(author.availability ?? {}).map(([month, status]) => {
-                  const colors: Record<string, string> = { open: "var(--green)", limited: "var(--gold)", full: "var(--ink-faint)" };
-                  const labels: Record<string, string> = { open: month, limited: `${month} (limited)`, full: `${month} (full)` };
-                  return (
-                    <span key={month} style={{
-                      padding: "7px 16px", borderRadius: 999, fontSize: 13.5, fontWeight: 700,
-                      background: status === "full" ? "var(--paper-2)" : status === "limited" ? "#FEF3CD" : "var(--green-tint)",
-                      color: colors[status as string],
-                      border: `1.5px solid ${status === "open" ? "#BBDDD0" : "var(--line)"}`,
-                    }}>
-                      {labels[status as string]}
-                    </span>
-                  );
-                })}
-              </div>
-            </section>
           </div>
 
           {/* Sticky request card */}
@@ -263,7 +253,6 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 ["Grade levels", author.grade_range?.join(", ") ?? ""],
                 ["Local zone", `Free within ${author.local_radius_miles} mi`],
                 ["Languages", author.languages?.join(", ") ?? ""],
-                ["Typical response", `${author.typical_response_days}–${(author.typical_response_days ?? 2) + 1} days`],
               ].map(([label, value]) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--line-soft)", paddingBottom: 9 }}>
                   <span style={{ color: "var(--ink-faint)", fontWeight: 600 }}>{label}</span>

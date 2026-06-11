@@ -1,13 +1,14 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import AuthorCard from "@/components/author-card";
-import { SEED_AUTHORS } from "@/lib/seed-data";
+import { Author } from "@/lib/types";
 
 const GRADES = ["K–2", "3–5", "6–8", "9–12"];
 const GENRES = ["Picture Books", "Middle Grade", "STEM", "Poetry", "Bilingual", "Adventure"];
 
 export default function AuthorDirectory() {
+  const [authors, setAuthors] = useState<Author[]>([]);
   const [grades, setGrades] = useState<string[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
   const [grantOnly, setGrantOnly] = useState(false);
@@ -15,11 +16,15 @@ export default function AuthorDirectory() {
   const [genreFilters, setGenreFilters] = useState<string[]>([]);
   const [sort, setSort] = useState("best");
 
+  useEffect(() => {
+    fetch("/api/authors").then((r) => r.json()).then(setAuthors).catch(() => {});
+  }, []);
+
   const toggleArr = (arr: string[], set: (v: string[]) => void, val: string) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
   const filtered = useMemo(() => {
-    let list = [...SEED_AUTHORS];
+    let list = [...authors];
     if (grades.length) list = list.filter((a) => a.grade_range?.some((g) => grades.includes(g)));
     if (formats.includes("in-person")) list = list.filter((a) => a.visit_offerings?.some((o) => o.kind !== "virtual"));
     if (formats.includes("virtual")) list = list.filter((a) => a.visit_offerings?.some((o) => o.kind === "virtual"));
