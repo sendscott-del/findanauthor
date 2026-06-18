@@ -18,6 +18,7 @@ export default function ProfileSetupPage() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     // Step 1 — Bio & photo
     tagline: "",
@@ -30,10 +31,11 @@ export default function ProfileSetupPage() {
     grade_range: [] as string[],
     visit_formats: [] as string[],
     local_radius: "30",
-    base_price_local: "650",
-    base_price_virtual: "300",
+    booking_url: "",
     offers_grant_visits: false,
     grant_visits_per_year: "3",
+    offers_title1_subsidy: false,
+    offers_free_virtual_qa: false,
     // Step 3 — Final touches
     languages: "English",
     genres: "",
@@ -42,6 +44,24 @@ export default function ProfileSetupPage() {
 
   function set(field: string, value: any) {
     setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handlePhotoUpload(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    setErrors((e) => ({ ...e, photo: "" }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload-photo", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      set("photo_url", json.url);
+    } catch (err: any) {
+      setErrors((e) => ({ ...e, photo: err.message || "Upload failed" }));
+    } finally {
+      setUploading(false);
+    }
   }
 
   function toggleArr(field: "grade_range" | "visit_formats", val: string) {
@@ -68,10 +88,11 @@ export default function ProfileSetupPage() {
           website_url: json.application.website_url ?? "",
           grade_range: json.application.grades ?? [],
           visit_formats: json.application.visit_formats ?? [],
-          base_price_local: String(json.application.base_price_local ?? 650),
-          base_price_virtual: String(json.application.base_price_virtual ?? 300),
+          booking_url: json.application.booking_url ?? json.application.website_url ?? "",
           offers_grant_visits: json.application.offers_grant ?? false,
           grant_visits_per_year: String(json.application.grant_visits_per_year ?? 3),
+          offers_title1_subsidy: json.application.offers_title1_subsidy ?? false,
+          offers_free_virtual_qa: json.application.offers_free_virtual_qa ?? false,
         }));
       }
       setStep(1);
@@ -203,11 +224,32 @@ export default function ProfileSetupPage() {
               {errors.bio && <span style={{ color: "var(--orange-deep)", fontSize: 13 }}>{errors.bio}</span>}
             </label>
 
-            <label>
-              <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>Author photo URL</span>
-              <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} placeholder="https://your-website.com/photo.jpg" value={form.photo_url} onChange={(e) => set("photo_url", e.target.value)} />
-              <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>Paste a direct link to a high-quality headshot (JPG or PNG).</span>
-            </label>
+            <div>
+              <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>Author photo</span>
+              <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                <div style={{ width: 88, height: 88, borderRadius: 12, flexShrink: 0, overflow: "hidden", background: "var(--paper-2)", border: "1.5px solid var(--line)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {form.photo_url ? (
+                    <img src={form.photo_url} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <span style={{ fontSize: 24 }}>📷</span>
+                  )}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label className="btn btn-ghost btn-sm" style={{ cursor: "pointer", display: "inline-block" }}>
+                    {uploading ? "Uploading…" : form.photo_url ? "Replace photo" : "Upload photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      style={{ display: "none" }}
+                      disabled={uploading}
+                      onChange={(e) => handlePhotoUpload(e.target.files?.[0])}
+                    />
+                  </label>
+                  <div style={{ fontSize: 12, color: "var(--ink-faint)", marginTop: 6 }}>JPG, PNG, WEBP or GIF · up to 5 MB. A clear headshot works best.</div>
+                  {errors.photo && <div style={{ color: "var(--orange-deep)", fontSize: 13, marginTop: 4 }}>{errors.photo}</div>}
+                </div>
+              </div>
+            </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <label>
@@ -273,19 +315,32 @@ export default function ProfileSetupPage() {
               </label>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: form.visit_formats.some(f => f !== "virtual") && form.visit_formats.includes("virtual") ? "1fr 1fr" : "1fr", gap: 16 }}>
-              {form.visit_formats.some((f) => f !== "virtual") && (
-                <label>
-                  <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>In-person base price ($)</span>
-                  <input type="number" className="form-input" style={{ width: "100%", boxSizing: "border-box" }} min={0} value={form.base_price_local} onChange={(e) => set("base_price_local", e.target.value)} />
-                </label>
-              )}
-              {form.visit_formats.includes("virtual") && (
-                <label>
-                  <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>Virtual base price ($)</span>
-                  <input type="number" className="form-input" style={{ width: "100%", boxSizing: "border-box" }} min={0} value={form.base_price_virtual} onChange={(e) => set("base_price_virtual", e.target.value)} />
-                </label>
-              )}
+            <label>
+              <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>Pricing &amp; booking link</span>
+              <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} placeholder="https://yoursite.com/school-visits  or  mailto:agent@agency.com" value={form.booking_url} onChange={(e) => set("booking_url", e.target.value)} />
+              <span style={{ fontSize: 12, color: "var(--ink-faint)" }}>
+                Your fees stay private. Schools click a <strong>“Request Pricing &amp; Availability”</strong> button that opens this link — your own site, a booking page, or your agent (use <code>mailto:</code> for an email). Defaults to your website.
+              </span>
+            </label>
+
+            <div style={{ background: "var(--blue-tint)", border: "1.5px solid var(--blue)", borderRadius: 14, padding: 18 }}>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }}>
+                <input type="checkbox" style={{ marginTop: 3, accentColor: "var(--blue)" }} checked={form.offers_title1_subsidy} onChange={(e) => set("offers_title1_subsidy", e.target.checked)} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: "var(--blue-deep)" }}>Offer subsidized rates for Title I schools</div>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>Title I and high-need schools can filter for this. You'll get a “Title I rates” badge.</div>
+                </div>
+              </label>
+            </div>
+
+            <div style={{ background: "var(--green-tint)", border: "1.5px solid #BBDDD0", borderRadius: 14, padding: 18 }}>
+              <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer" }}>
+                <input type="checkbox" style={{ marginTop: 3, accentColor: "var(--green)" }} checked={form.offers_free_virtual_qa} onChange={(e) => set("offers_free_virtual_qa", e.target.checked)} />
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: "var(--green-deep)" }}>Offer a free virtual Q&amp;A</div>
+                  <div style={{ fontSize: 13, color: "var(--ink-soft)" }}>A short, no-cost video Q&amp;A for classrooms that have read at least one of your books.</div>
+                </div>
+              </label>
             </div>
 
             <div>

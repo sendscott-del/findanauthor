@@ -31,7 +31,7 @@ export default function Footer() {
           {/* For Educators */}
           <div>
             <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 14, color: "rgba(233,222,203,.5)" }}>For Educators</div>
-            {[["Find an author", "/authors"], ["How it works", "/#how"], ["Volunteer visit grants", "/#grant"], ["Request a visit", "/request"]].map(([l, h]) => (
+            {[["Find an author", "/authors"], ["How it works", "/#how"], ["Volunteer visit grants", "/#grant"], ["FAQ", "/faq"]].map(([l, h]) => (
               <Link key={h} href={h} style={{ display: "block", fontSize: 14, color: "#E9DECB", textDecoration: "none", marginBottom: 9, opacity: .8 }}>
                 {l}
               </Link>
@@ -41,7 +41,7 @@ export default function Footer() {
           {/* For Authors */}
           <div>
             <div style={{ fontWeight: 800, fontSize: 13, letterSpacing: ".06em", textTransform: "uppercase", marginBottom: 14, color: "rgba(233,222,203,.5)" }}>For Authors</div>
-            {[["Apply to join", "/apply"], ["Create your profile", "/join"], ["How vetting works", "/apply#vetting"], ["Author FAQ", "/apply#faq"]].map(([l, h]) => (
+            {[["Apply to join", "/apply"], ["How vetting works", "/apply#vetting"], ["Author FAQ", "/faq"]].map(([l, h]) => (
               <Link key={h} href={h} style={{ display: "block", fontSize: 14, color: "#E9DECB", textDecoration: "none", marginBottom: 9, opacity: .8 }}>
                 {l}
               </Link>

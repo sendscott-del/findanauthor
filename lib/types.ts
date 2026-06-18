@@ -44,9 +44,16 @@ export interface Author {
   offers_grant_visits: boolean;
   grant_visits_per_year: number;
   grant_visits_remaining: number;
+  offers_title1_subsidy?: boolean;
+  offers_free_virtual_qa?: boolean;
+  founding_author?: boolean;
   website_url?: string;
+  booking_url?: string;
   status: "active" | "inactive" | "pending";
   created_at: string;
+  // Computed at query time when a location search is active
+  distance_miles?: number | null;
+  within_local_zone?: boolean;
 }
 
 export interface SchoolRequest {

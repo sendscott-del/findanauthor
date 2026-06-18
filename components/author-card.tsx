@@ -10,9 +10,7 @@ interface Props {
 
 export default function AuthorCard({ author, showGrantRing }: Props) {
   const hasGrant = author.offers_grant_visits && (author.grant_visits_remaining ?? 0) > 0;
-  const minPrice = author.visit_offerings
-    ? Math.min(...author.visit_offerings.map((o) => o.base_price))
-    : null;
+  const dist = author.distance_miles;
 
   return (
     <Link
@@ -23,16 +21,30 @@ export default function AuthorCard({ author, showGrantRing }: Props) {
         className={`card card-hover${hasGrant && showGrantRing !== false ? " grant-ring" : ""}`}
         style={{ overflow: "hidden" }}
       >
-        {/* Photo placeholder */}
-        <div className="ph" style={{ aspectRatio: "5/4", position: "relative" }}>
-          <span style={{
-            fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em",
-            textTransform: "uppercase", color: "var(--ink-faint)",
-            background: "rgba(255,255,255,.6)", padding: "4px 8px", borderRadius: 4,
-          }}>Author photo</span>
+        {/* Photo */}
+        <div className="ph" style={{ aspectRatio: "5/4", position: "relative", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          {author.photo_url ? (
+            <img
+              src={author.photo_url}
+              alt={author.name ?? "Author"}
+              loading="lazy"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          ) : (
+            <span style={{
+              fontFamily: "monospace", fontSize: 11, letterSpacing: ".08em",
+              textTransform: "uppercase", color: "var(--ink-faint)",
+              background: "rgba(255,255,255,.6)", padding: "4px 8px", borderRadius: 4,
+            }}>Author photo</span>
+          )}
           {hasGrant && (
             <div className="badge badge-grant" style={{ position: "absolute", top: 10, left: 10, fontSize: 11 }}>
               ★ Grant visit
+            </div>
+          )}
+          {author.within_local_zone && (
+            <div className="badge" style={{ position: "absolute", bottom: 10, left: 10, fontSize: 11, background: "var(--green)", color: "#fff" }}>
+              ✓ Local · no travel fee
             </div>
           )}
           {/* Save button */}
@@ -75,6 +87,12 @@ export default function AuthorCard({ author, showGrantRing }: Props) {
             {author.visit_offerings?.some((o) => o.kind === "virtual") && (
               <span className="badge badge-virtual" style={{ fontSize: 11, padding: "4px 9px" }}>💻 Virtual</span>
             )}
+            {author.offers_title1_subsidy && (
+              <span className="badge" style={{ fontSize: 11, padding: "4px 9px", background: "var(--blue-tint)", color: "var(--blue-deep)" }}>Title I rates</span>
+            )}
+            {author.offers_free_virtual_qa && (
+              <span className="badge" style={{ fontSize: 11, padding: "4px 9px", background: "var(--green-tint)", color: "var(--green-deep)" }}>Free virtual Q&amp;A</span>
+            )}
           </div>
         </div>
 
@@ -84,8 +102,8 @@ export default function AuthorCard({ author, showGrantRing }: Props) {
           borderTop: "1px dashed var(--line)",
           display: "flex", justifyContent: "space-between", alignItems: "center",
         }}>
-          <span style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 16 }}>
-            {minPrice ? `From $${minPrice}` : "Varies"}
+          <span style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 15, color: "var(--ink-soft)" }}>
+            {typeof dist === "number" ? `${Math.round(dist)} mi away` : "View profile"}
           </span>
           <span style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>
             {author.location_city}, {author.location_state}

@@ -29,16 +29,19 @@ export async function POST(req: NextRequest) {
     const app = tokenRow.wfr_applications;
     const slug = slugify(app.name);
 
-    // Build visit_offerings from form
+    // Build visit_offerings from form (pricing is private — no base_price stored)
     const offerings: any[] = [];
     if (form.visit_formats?.includes("in_person_assembly")) {
-      offerings.push({ kind: "in_person_assembly", title: "In-Person Assembly", base_price: parseInt(form.base_price_local) || 650, duration_min: 45, max_students: 300 });
+      offerings.push({ kind: "in_person_assembly", title: "In-Person Assembly", duration_min: 45, max_students: 300 });
     }
     if (form.visit_formats?.includes("in_person_classroom")) {
-      offerings.push({ kind: "in_person_classroom", title: "In-Person Classroom", base_price: parseInt(form.base_price_local) || 650, duration_min: 45, max_students: 30 });
+      offerings.push({ kind: "in_person_classroom", title: "In-Person Classroom", duration_min: 45, max_students: 30 });
     }
     if (form.visit_formats?.includes("virtual")) {
-      offerings.push({ kind: "virtual", title: "Virtual Visit", base_price: parseInt(form.base_price_virtual) || 300, duration_min: 45, max_students: 200 });
+      offerings.push({ kind: "virtual", title: "Virtual Visit", duration_min: 45, max_students: 200 });
+    }
+    if (form.offers_free_virtual_qa) {
+      offerings.push({ kind: "free_virtual_qa", title: "Free Virtual Q&A", duration_min: 30, max_students: 60, free: true, requires_read: true });
     }
 
     // Upsert author profile
@@ -52,12 +55,15 @@ export async function POST(req: NextRequest) {
       location_city: form.location_city,
       location_state: form.location_state,
       website_url: form.website_url || null,
+      booking_url: form.booking_url || form.website_url || null,
       grade_range: form.grade_range,
       visit_offerings: offerings,
       local_radius_miles: parseInt(form.local_radius) || 30,
       offers_grant_visits: form.offers_grant_visits,
       grant_visits_per_year: form.offers_grant_visits ? parseInt(form.grant_visits_per_year) || 3 : 0,
       grant_visits_remaining: form.offers_grant_visits ? parseInt(form.grant_visits_per_year) || 3 : 0,
+      offers_title1_subsidy: form.offers_title1_subsidy ?? false,
+      offers_free_virtual_qa: form.offers_free_virtual_qa ?? false,
       languages: splitCSV(form.languages || "English"),
       genres: splitCSV(form.genres),
       themes: splitCSV(form.themes),

@@ -1,6 +1,5 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
-import Link from "next/link";
 import AuthorCard from "@/components/author-card";
 import { Author } from "@/lib/types";
 
@@ -12,13 +11,21 @@ export default function AuthorDirectory() {
   const [grades, setGrades] = useState<string[]>([]);
   const [formats, setFormats] = useState<string[]>([]);
   const [grantOnly, setGrantOnly] = useState(false);
-  const [maxBudget, setMaxBudget] = useState(1500);
+  const [title1Only, setTitle1Only] = useState(false);
+  const [freeQaOnly, setFreeQaOnly] = useState(false);
+  const [localOnly, setLocalOnly] = useState(false);
+  const [zip, setZip] = useState("");
+  const [zipInput, setZipInput] = useState("");
   const [genreFilters, setGenreFilters] = useState<string[]>([]);
   const [sort, setSort] = useState("best");
 
+  // Refetch with distance info whenever the active ZIP changes
   useEffect(() => {
-    fetch("/api/authors").then((r) => r.json()).then(setAuthors).catch(() => {});
-  }, []);
+    const url = zip ? `/api/authors?zip=${encodeURIComponent(zip)}` : "/api/authors";
+    fetch(url).then((r) => r.json()).then(setAuthors).catch(() => {});
+  }, [zip]);
+
+  const locationActive = zip.length === 5;
 
   const toggleArr = (arr: string[], set: (v: string[]) => void, val: string) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
@@ -29,20 +36,35 @@ export default function AuthorDirectory() {
     if (formats.includes("in-person")) list = list.filter((a) => a.visit_offerings?.some((o) => o.kind !== "virtual"));
     if (formats.includes("virtual")) list = list.filter((a) => a.visit_offerings?.some((o) => o.kind === "virtual"));
     if (grantOnly) list = list.filter((a) => a.offers_grant_visits && (a.grant_visits_remaining ?? 0) > 0);
-    if (maxBudget < 1500) list = list.filter((a) => (a.visit_offerings ?? []).some((o) => o.base_price <= maxBudget));
+    if (title1Only) list = list.filter((a) => a.offers_title1_subsidy);
+    if (freeQaOnly) list = list.filter((a) => a.offers_free_virtual_qa);
+    if (localOnly && locationActive) list = list.filter((a) => a.within_local_zone);
     if (genreFilters.length) list = list.filter((a) => a.genres?.some((g) => genreFilters.includes(g)));
+
     if (sort === "grant") list = [...list].sort((a, b) => (b.offers_grant_visits ? 1 : 0) - (a.offers_grant_visits ? 1 : 0));
-    if (sort === "price-low") list = [...list].sort((a, b) => {
-      const ma = Math.min(...(a.visit_offerings ?? [{ base_price: 9999 }]).map((o) => o.base_price));
-      const mb = Math.min(...(b.visit_offerings ?? [{ base_price: 9999 }]).map((o) => o.base_price));
-      return ma - mb;
-    });
+    if (sort === "nearest" || (locationActive && sort === "best")) {
+      list = [...list].sort((a, b) => {
+        const da = a.distance_miles ?? Infinity;
+        const db = b.distance_miles ?? Infinity;
+        return da - db;
+      });
+    }
     return list;
-  }, [grades, formats, grantOnly, maxBudget, genreFilters, sort]);
+  }, [authors, grades, formats, grantOnly, title1Only, freeQaOnly, localOnly, locationActive, genreFilters, sort]);
 
   const grantCount = filtered.filter((a) => a.offers_grant_visits && (a.grant_visits_remaining ?? 0) > 0).length;
-  const clearAll = () => { setGrades([]); setFormats([]); setGrantOnly(false); setMaxBudget(1500); setGenreFilters([]); };
-  const hasFilters = grades.length || formats.length || grantOnly || maxBudget < 1500 || genreFilters.length;
+  const clearAll = () => {
+    setGrades([]); setFormats([]); setGrantOnly(false); setTitle1Only(false);
+    setFreeQaOnly(false); setLocalOnly(false); setGenreFilters([]);
+    setZip(""); setZipInput("");
+  };
+  const hasFilters = grades.length || formats.length || grantOnly || title1Only || freeQaOnly || localOnly || zip || genreFilters.length;
+
+  const submitZip = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleaned = zipInput.replace(/\D/g, "").slice(0, 5);
+    setZip(cleaned.length === 5 ? cleaned : "");
+  };
 
   return (
     <>
@@ -54,11 +76,33 @@ export default function AuthorDirectory() {
             Find the storyteller your students will love.
           </h1>
           <p style={{ color: "var(--ink-soft)", maxWidth: 520, marginBottom: 24, fontSize: 16 }}>
-            Every author here is traditionally published, school-visit-experienced, and background-checked. Browse freely — no cost to your school.
+            Every author here is traditionally published, school-visit-experienced, and background-checked.
           </p>
+          {/* Location search */}
+          <form onSubmit={submitZip} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              inputMode="numeric"
+              placeholder="Enter your ZIP to find authors near you"
+              value={zipInput}
+              onChange={(e) => setZipInput(e.target.value)}
+              className="form-input"
+              style={{ width: 300, maxWidth: "100%" }}
+            />
+            <button type="submit" className="btn btn-primary">Search nearby</button>
+            {zip && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setZip(""); setZipInput(""); setLocalOnly(false); }}>
+                Clear location
+              </button>
+            )}
+          </form>
+          {locationActive && (
+            <p style={{ marginTop: 10, fontSize: 13.5, color: "var(--green-deep)", fontWeight: 600 }}>
+              📍 Showing distances from {zip}. Authors marked “Local · no travel fee” cost you no travel — ideal for grant visits, which cover the honorarium only.
+            </p>
+          )}
         </div>
         {/* Grant strip */}
-        <div style={{ background: "var(--green-tint)", borderTop: "1px solid #BBDDD0", borderBottom: "1px solid #BBDDD0", padding: "14px 0" }}>
+        <div style={{ background: "var(--green-tint)", borderTop: "1px solid #BBDDD0", borderBottom: "1px solid #BBDDD0", padding: "14px 0", marginTop: 28 }}>
           <div className="container" style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--green)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>★</div>
             <p style={{ margin: 0, fontSize: 14.5, color: "var(--green-deep)", fontWeight: 600 }}>
@@ -105,24 +149,37 @@ export default function AuthorDirectory() {
             ))}
           </div>
 
-          {/* Grant visits */}
+          {/* Location */}
           <div style={{ marginBottom: 24 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", fontSize: 15 }}>
+            <div className="form-label">Location</div>
+            <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: locationActive ? "pointer" : "not-allowed", fontSize: 15, opacity: locationActive ? 1 : 0.5 }}>
+              <input type="checkbox" checked={localOnly} disabled={!locationActive} onChange={(e) => setLocalOnly(e.target.checked)}
+                style={{ accentColor: "var(--green)", width: 17, height: 17 }} />
+              <span style={{ color: "var(--green-deep)", fontWeight: 700 }}>Local only — no travel fee</span>
+            </label>
+            {!locationActive && (
+              <div style={{ fontSize: 12, color: "var(--ink-faint)", marginTop: 4 }}>Enter a ZIP above to filter by distance.</div>
+            )}
+          </div>
+
+          {/* Funding & access */}
+          <div style={{ marginBottom: 24 }}>
+            <div className="form-label">Funding &amp; access</div>
+            <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", fontSize: 15, marginBottom: 8 }}>
               <input type="checkbox" checked={grantOnly} onChange={(e) => setGrantOnly(e.target.checked)}
                 style={{ accentColor: "var(--green)", width: 17, height: 17 }} />
               <span style={{ color: "var(--green-deep)", fontWeight: 700 }}>★ Offers grant visits</span>
             </label>
-          </div>
-
-          {/* Budget */}
-          <div style={{ marginBottom: 24 }}>
-            <div className="form-label">Max budget: {maxBudget >= 1500 ? "Any" : `$${maxBudget}`}</div>
-            <input type="range" min={0} max={1500} step={50} value={maxBudget}
-              onChange={(e) => setMaxBudget(Number(e.target.value))}
-              style={{ width: "100%", accentColor: "var(--orange)" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--ink-faint)", marginTop: 3 }}>
-              <span>$0</span><span>$1,500+</span>
-            </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", fontSize: 15, marginBottom: 8 }}>
+              <input type="checkbox" checked={title1Only} onChange={(e) => setTitle1Only(e.target.checked)}
+                style={{ accentColor: "var(--blue)", width: 17, height: 17 }} />
+              <span style={{ color: "var(--blue-deep)", fontWeight: 700 }}>Title I subsidized rates</span>
+            </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", fontSize: 15 }}>
+              <input type="checkbox" checked={freeQaOnly} onChange={(e) => setFreeQaOnly(e.target.checked)}
+                style={{ accentColor: "var(--green)", width: 17, height: 17 }} />
+              <span style={{ color: "var(--green-deep)", fontWeight: 700 }}>Free virtual Q&amp;A</span>
+            </label>
           </div>
 
           {/* Genre */}
@@ -148,8 +205,8 @@ export default function AuthorDirectory() {
             </span>
             <select className="form-input" style={{ width: "auto", padding: "8px 14px" }} value={sort} onChange={(e) => setSort(e.target.value)}>
               <option value="best">Best match</option>
+              {locationActive && <option value="nearest">Nearest first</option>}
               <option value="grant">Volunteer visits first</option>
-              <option value="price-low">Price: low to high</option>
             </select>
           </div>
 
@@ -162,12 +219,6 @@ export default function AuthorDirectory() {
               <div style={{ fontSize: 32, marginBottom: 12 }}>📚</div>
               <h3>No authors match those filters</h3>
               <p>Try widening your search or <button onClick={clearAll} style={{ color: "var(--orange)", background: "none", border: "none", cursor: "pointer", fontWeight: 700 }}>clearing all filters</button>.</p>
-            </div>
-          )}
-
-          {filtered.length > 0 && (
-            <div style={{ textAlign: "center", marginTop: 36 }}>
-              <button className="btn btn-ghost">Load more authors</button>
             </div>
           )}
         </div>

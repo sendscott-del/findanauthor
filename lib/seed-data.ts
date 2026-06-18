@@ -25,7 +25,10 @@ export const SEED_AUTHORS: Partial<Author>[] = [
     offers_grant_visits: true,
     grant_visits_per_year: 5,
     grant_visits_remaining: 3,
+    offers_title1_subsidy: true,
+    offers_free_virtual_qa: true,
     website_url: "https://marisolvega.com",
+    booking_url: "https://marisolvega.com",
     status: "active",
   },
   {
@@ -51,6 +54,9 @@ export const SEED_AUTHORS: Partial<Author>[] = [
     offers_grant_visits: true,
     grant_visits_per_year: 3,
     grant_visits_remaining: 2,
+    offers_title1_subsidy: false,
+    offers_free_virtual_qa: true,
+    booking_url: "mailto:visits@jamesokonkwo.com",
     status: "active",
   },
   {
@@ -75,6 +81,8 @@ export const SEED_AUTHORS: Partial<Author>[] = [
     offers_grant_visits: false,
     grant_visits_per_year: 0,
     grant_visits_remaining: 0,
+    offers_title1_subsidy: true,
+    offers_free_virtual_qa: false,
     status: "active",
   },
   {
@@ -100,6 +108,9 @@ export const SEED_AUTHORS: Partial<Author>[] = [
     offers_grant_visits: true,
     grant_visits_per_year: 4,
     grant_visits_remaining: 4,
+    offers_title1_subsidy: true,
+    offers_free_virtual_qa: true,
+    booking_url: "https://derekwashingtonpoet.com/visits",
     status: "active",
   },
 ];

@@ -17,14 +17,28 @@ async function getAuthor(slug: string): Promise<Author | null> {
   return data ?? null;
 }
 
+/** Normalize a booking link: allow mailto: and bare domains. */
+function bookingHref(url?: string): string | null {
+  if (!url) return null;
+  const u = url.trim();
+  if (!u) return null;
+  if (u.startsWith("mailto:") || u.startsWith("http://") || u.startsWith("https://")) return u;
+  if (u.includes("@") && !u.includes("/")) return `mailto:${u}`;
+  return `https://${u}`;
+}
+
 export default async function AuthorProfile({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const author = await getAuthor(slug);
   if (!author) notFound();
 
-  const localOffering = author.visit_offerings?.find((o) => o.kind === "local");
-  const outOffering = author.visit_offerings?.find((o) => o.kind === "out_of_area");
-  const virtualOffering = author.visit_offerings?.find((o) => o.kind === "virtual");
+  const offerings = author.visit_offerings ?? [];
+  const inPersonOfferings = offerings.filter((o) => o.kind !== "virtual" && (o.kind as string) !== "free_virtual_qa");
+  const hasInPerson = inPersonOfferings.length > 0;
+  const virtualOffering = offerings.find((o) => o.kind === "virtual");
+  const freeQa = author.offers_free_virtual_qa || offerings.some((o) => (o.kind as string) === "free_virtual_qa");
+
+  const booking = bookingHref(author.booking_url || author.website_url);
 
   return (
     <>
@@ -69,18 +83,22 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
               {author.grade_range?.map((g) => (
                 <span key={g} className="badge badge-grade">{g}</span>
               ))}
-              {author.visit_offerings?.some((o) => o.kind !== "virtual") && (
-                <span className="badge badge-in-person">📍 In-person</span>
-              )}
+              {hasInPerson && <span className="badge badge-in-person">📍 In-person</span>}
               {virtualOffering && <span className="badge badge-virtual">💻 Virtual</span>}
-              <span className="badge badge-verified">✓ Published & vetted</span>
+              {author.offers_title1_subsidy && (
+                <span className="badge" style={{ background: "var(--blue-tint)", color: "var(--blue-deep)" }}>Title I rates</span>
+              )}
+              {freeQa && (
+                <span className="badge" style={{ background: "var(--green-tint)", color: "var(--green-deep)" }}>Free virtual Q&amp;A</span>
+              )}
+              <span className="badge badge-verified">✓ Published &amp; vetted</span>
             </div>
 
             {/* Quickfacts */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 20, padding: "16px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
               {[
                 ["Based in", `${author.location_city}, ${author.location_state}`],
-                ["Local zone", `${author.local_radius_miles} mi · no fee`],
+                ["Local zone", `${author.local_radius_miles} mi · no travel fee`],
                 ["Books published", `${author.books?.length ?? 0} titles`],
               ].map(([label, value]) => (
                 <div key={label}>
@@ -122,44 +140,17 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
 
             <hr className="dotted-divider" style={{ marginBottom: 40, color: "var(--ink-faint)" }} />
 
-            {/* Visit formats */}
+            {/* Visit formats (no prices — pricing is requested directly) */}
             <section style={{ marginBottom: 40 }}>
               <h2 style={{ fontSize: 24, marginBottom: 20 }}>Visit formats</h2>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }} className="formats-grid">
-                {localOffering && (
+                {hasInPerson && (
                   <div className="card" style={{ padding: 22 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--orange)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>📍</div>
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--orange-deep)", marginBottom: 5 }}>In-person · Local</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Local visit</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--orange)", marginBottom: 12 }}>${localOffering.base_price} / day</div>
-                    <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {localOffering.includes?.map((item, i) => (
-                        <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
-                          <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--orange-deep)", marginBottom: 5 }}>In-person</div>
+                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 10 }}>School visit</div>
                     <div style={{ background: "var(--green-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--green-deep)", fontWeight: 600 }}>
-                      ✓ No travel fee — within {author.local_radius_miles} mi of {author.location_city}, {author.location_state}.
-                    </div>
-                  </div>
-                )}
-
-                {outOffering && (
-                  <div className="card" style={{ padding: 22, borderColor: "#EBC9AE" }}>
-                    <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--orange-deep)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>🧳</div>
-                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--orange-deep)", marginBottom: 5 }}>In-person · Out of Area</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Out-of-area visit</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--orange)", marginBottom: 12 }}>${outOffering.base_price} / day + travel</div>
-                    <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {outOffering.includes?.map((item, i) => (
-                        <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
-                          <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
-                        </li>
-                      ))}
-                    </ul>
-                    <div style={{ background: "var(--orange-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--orange-deep)", fontWeight: 600 }}>
-                      ✈️ Travel costs apply. Split it by booking with neighboring schools.
+                      ✓ No travel fee within {author.local_radius_miles} mi of {author.location_city}, {author.location_state}. Beyond that, travel is arranged together.
                     </div>
                   </div>
                 )}
@@ -168,17 +159,20 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                   <div className="card" style={{ padding: 22 }}>
                     <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--blue)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>💻</div>
                     <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--blue-deep)", marginBottom: 5 }}>Virtual</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 4 }}>Virtual visit</div>
-                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, color: "var(--blue)", marginBottom: 12 }}>${virtualOffering.base_price} / session</div>
-                    <ul style={{ paddingLeft: 0, listStyle: "none", margin: "0 0 14px", display: "flex", flexDirection: "column", gap: 6 }}>
-                      {virtualOffering.includes?.map((item, i) => (
-                        <li key={i} style={{ fontSize: 13.5, color: "var(--ink-soft)", display: "flex", gap: 7, alignItems: "flex-start" }}>
-                          <span style={{ color: "var(--green)", flexShrink: 0 }}>✓</span>{item}
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 10 }}>Virtual visit</div>
+                    <div style={{ background: "var(--blue-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--blue-deep)", fontWeight: 600 }}>
+                      ✓ No travel — connect from anywhere. Often the most budget-friendly option.
+                    </div>
+                  </div>
+                )}
+
+                {freeQa && (
+                  <div className="card" style={{ padding: 22, borderColor: "#BBDDD0" }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: "var(--green)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, marginBottom: 12 }}>🎁</div>
+                    <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: "var(--green-deep)", marginBottom: 5 }}>Free</div>
+                    <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 20, marginBottom: 10 }}>Virtual Q&amp;A</div>
                     <div style={{ background: "var(--green-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--green-deep)", fontWeight: 600 }}>
-                      ✓ No travel — connect from anywhere.
+                      ✓ Free for classrooms that have read at least one of {author.name?.split(" ")[0]}&apos;s books.
                     </div>
                   </div>
                 )}
@@ -226,6 +220,9 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                         </div>
                       ))}
                     </div>
+                    <Link href={`/request?author=${author.slug}&grant=1`} className="btn btn-green" style={{ marginTop: 22 }}>
+                      Apply for a grant visit →
+                    </Link>
                   </div>
                 </section>
               </>
@@ -234,17 +231,26 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
 
           {/* Sticky request card */}
           <div className="card" style={{ padding: 28, position: "sticky", top: 80 }}>
-            <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 28, marginBottom: 3 }}>
-              ${localOffering?.base_price ?? virtualOffering?.base_price} <span style={{ fontSize: 16, color: "var(--ink-soft)" }}>/ {localOffering ? "in-person day" : "session"}</span>
+            <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: 22, marginBottom: 6 }}>
+              Pricing &amp; availability
             </div>
-            {virtualOffering && localOffering && (
-              <div style={{ fontSize: 14, color: "var(--ink-soft)", marginBottom: 10 }}>
-                ${virtualOffering.base_price} virtual · out-of-area adds travel
+            <p style={{ fontSize: 13.5, color: "var(--ink-soft)", marginBottom: 16 }}>
+              Fees vary by format, travel, and your school&apos;s needs. Reach out directly for a quote and open dates.
+            </p>
+
+            {author.offers_title1_subsidy && (
+              <div style={{ background: "var(--blue-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--blue-deep)", fontWeight: 600, marginBottom: 10 }}>
+                ✦ Subsidized rates available for Title I schools
               </div>
             )}
             {author.offers_grant_visits && (
-              <div style={{ background: "var(--green-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13.5, color: "var(--green-deep)", fontWeight: 600, marginBottom: 16 }}>
+              <div style={{ background: "var(--green-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13.5, color: "var(--green-deep)", fontWeight: 600, marginBottom: 10 }}>
                 ★ {author.grant_visits_remaining} free grant visit{(author.grant_visits_remaining ?? 0) !== 1 ? "s" : ""} remaining
+              </div>
+            )}
+            {freeQa && (
+              <div style={{ background: "var(--green-tint)", borderRadius: 10, padding: "10px 13px", fontSize: 13, color: "var(--green-deep)", fontWeight: 600, marginBottom: 16 }}>
+                🎁 Free virtual Q&amp;A for classes that have read a book
               </div>
             )}
 
@@ -261,9 +267,15 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
               ))}
             </div>
 
-            <Link href={`/request?author=${author.slug}`} className="btn btn-primary btn-block btn-lg" style={{ marginBottom: 10 }}>
-              Request a visit
-            </Link>
+            {booking ? (
+              <a href={booking} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-block btn-lg" style={{ marginBottom: 10 }}>
+                Request Pricing &amp; Availability →
+              </a>
+            ) : (
+              <a href={`mailto:hello@findanauthor.org?subject=Visit%20inquiry%20for%20${encodeURIComponent(author.name)}`} className="btn btn-primary btn-block btn-lg" style={{ marginBottom: 10 }}>
+                Request Pricing &amp; Availability →
+              </a>
+            )}
             <button className="btn btn-ghost btn-block" style={{ marginBottom: 16 }}>♡ Save to shortlist</button>
 
             <div style={{ textAlign: "center", fontSize: 12.5, color: "var(--green-deep)", fontWeight: 700 }}>

@@ -45,6 +45,7 @@ export default function Nav() {
             ["How it works", "/#how"],
             ["Volunteer visits", "/#grant"],
             ["For authors", "/apply"],
+            ["FAQ", "/faq"],
           ].map(([label, href]) => (
             <Link key={href} href={href} style={{
               fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: 14.5,
@@ -55,7 +56,7 @@ export default function Nav() {
               {label}
             </Link>
           ))}
-          <Link href="/request" className="btn btn-primary btn-sm">Request a visit</Link>
+          <Link href="/authors" className="btn btn-primary btn-sm">Find an author</Link>
         </div>
 
         {/* Mobile toggle */}
@@ -81,6 +82,7 @@ export default function Nav() {
             ["How it works", "/#how"],
             ["Volunteer visits", "/#grant"],
             ["For authors", "/apply"],
+            ["FAQ", "/faq"],
           ].map(([label, href]) => (
             <Link key={href} href={href} onClick={() => setOpen(false)} style={{
               display: "block", fontFamily: "'Mulish', sans-serif", fontWeight: 700,
@@ -91,8 +93,8 @@ export default function Nav() {
             </Link>
           ))}
           <div style={{ marginTop: 20 }}>
-            <Link href="/request" className="btn btn-primary btn-block" onClick={() => setOpen(false)}>
-              Request a visit
+            <Link href="/authors" className="btn btn-primary btn-block" onClick={() => setOpen(false)}>
+              Find an author
             </Link>
           </div>
         </div>

@@ -25,8 +25,10 @@ export default function ApplyPage() {
     visit_formats: [] as string[],
     grades: [] as string[],
     local_radius: "30",
-    base_price_local: "650", base_price_virtual: "300",
+    booking_url: "",
     offers_grant: false, grant_visits_per_year: "3",
+    offers_title1_subsidy: false,
+    offers_free_virtual_qa: false,
     languages: [] as string[],
   });
 
@@ -305,19 +307,10 @@ export default function ApplyPage() {
                 <input className="form-input" type="number" value={form.local_radius} onChange={(e) => set("local_radius", e.target.value)} style={{ maxWidth: 140 }} />
               </div>
             )}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              {form.visit_formats.some((f) => f.includes("person")) && (
-                <div>
-                  <label className="form-label">In-person base price / day ($)</label>
-                  <input className="form-input" type="number" value={form.base_price_local} onChange={(e) => set("base_price_local", e.target.value)} />
-                </div>
-              )}
-              {form.visit_formats.includes("Virtual") && (
-                <div>
-                  <label className="form-label">Virtual base price / session ($)</label>
-                  <input className="form-input" type="number" value={form.base_price_virtual} onChange={(e) => set("base_price_virtual", e.target.value)} />
-                </div>
-              )}
+            <div>
+              <label className="form-label">Pricing &amp; booking link (optional)</label>
+              <input className="form-input" type="url" value={form.booking_url} onChange={(e) => set("booking_url", e.target.value)} placeholder="https://yoursite.com/school-visits or mailto:agent@agency.com" />
+              <div style={{ fontSize: 13, color: "var(--ink-faint)", marginTop: 5 }}>Your fees stay private. Schools click “Request Pricing &amp; Availability” to reach you or your agent here. You can change this later.</div>
             </div>
             <div>
               <label className="form-label">Languages you present in</label>
@@ -343,6 +336,26 @@ export default function ApplyPage() {
                   <input className="form-input" type="number" value={form.grant_visits_per_year} onChange={(e) => set("grant_visits_per_year", e.target.value)} style={{ maxWidth: 100 }} min={1} max={20} />
                 </div>
               )}
+            </div>
+            <div style={{ background: "var(--blue-tint)", border: "1.5px solid var(--blue)", borderRadius: 16, padding: 20 }}>
+              <label style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
+                <input type="checkbox" checked={form.offers_title1_subsidy} onChange={(e) => set("offers_title1_subsidy", e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: "var(--blue)", marginTop: 2 }} />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--blue-deep)", marginBottom: 4 }}>Offer subsidized rates for Title I schools</div>
+                  <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>I offer reduced rates for Title I / high-need schools. They can filter for this, and you'll get a “Title I rates” badge.</div>
+                </div>
+              </label>
+            </div>
+            <div style={{ background: "var(--green-tint)", border: "1.5px solid #BBDDD0", borderRadius: 16, padding: 20 }}>
+              <label style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
+                <input type="checkbox" checked={form.offers_free_virtual_qa} onChange={(e) => set("offers_free_virtual_qa", e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: "var(--green)", marginTop: 2 }} />
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--green-deep)", marginBottom: 4 }}>Offer a free virtual Q&amp;A</div>
+                  <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>A short, no-cost video Q&amp;A for classrooms that have read at least one of my books.</div>
+                </div>
+              </label>
             </div>
           </div>
         </div>
@@ -399,6 +412,8 @@ export default function ApplyPage() {
               ["Grades", form.grades.join(", ") || "Not set"],
               ["Languages", form.languages.join(", ") || "English"],
               ["Volunteer visits", form.offers_grant ? `Yes — ${form.grant_visits_per_year}/year` : "No"],
+              ["Title I subsidized rates", form.offers_title1_subsidy ? "Yes" : "No"],
+              ["Free virtual Q&A", form.offers_free_virtual_qa ? "Yes" : "No"],
               ["School experience", form.years_visiting],
               ["Background check", form.background_check_consent ? "Consented" : "Not consented"],
             ].map(([label, value]) => (

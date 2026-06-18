@@ -1,10 +1,47 @@
 import Link from "next/link";
 import AuthorCard from "@/components/author-card";
-import BookCover from "@/components/book-cover";
-import { SEED_AUTHORS, COVER_COLORS } from "@/lib/seed-data";
+import BookCarousel, { CarouselBook } from "@/components/book-carousel";
+import { SEED_AUTHORS } from "@/lib/seed-data";
+import { serverClient } from "@/lib/supabase";
+import { Author } from "@/lib/types";
 
-export default function Home() {
-  const featured = SEED_AUTHORS.slice(0, 4);
+export const dynamic = "force-dynamic";
+
+async function getFeatured(): Promise<Partial<Author>[]> {
+  try {
+    const supabase = serverClient();
+    const { data, error } = await supabase
+      .from("wfr_authors")
+      .select("*")
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(8);
+    if (error) throw error;
+    if (data && data.length) return data;
+  } catch {
+    /* fall through to seed */
+  }
+  return SEED_AUTHORS;
+}
+
+export default async function Home() {
+  const all = await getFeatured();
+  const featured = all.slice(0, 4);
+
+  // Build the carousel from real book covers (fall back to seed colours).
+  const books: CarouselBook[] = all
+    .flatMap((a) => (a.books ?? []).map((b) => ({ color: b.cover_color, title: b.title })))
+    .filter((b) => b.color);
+  const carouselBooks: CarouselBook[] = (books.length >= 6 ? books : [
+    { color: "#C7522A", title: "My Big World" },
+    { color: "#2E8B6F", title: "Storm Riders" },
+    { color: "#3A5A8C", title: "The Bee Why" },
+    { color: "#E2A93B", title: "Iron Compass" },
+    { color: "#7C6A9C", title: "Words That Break Walls" },
+    { color: "#C7522A", title: "The Color of Home" },
+    { color: "#2E8B6F", title: "Every Poem Is a Fist" },
+    { color: "#3A5A8C", title: "The Last Cartographer" },
+  ]).slice(0, 12);
 
   return (
     <>
@@ -16,7 +53,7 @@ export default function Home() {
 
         <div className="container" style={{ position: "relative" }}>
           <div className="eyebrow" style={{ justifyContent: "center", color: "var(--orange-deep)", marginBottom: 20 }}>
-            Free · No cost to schools, ever
+            Ignite a love of reading in every child
           </div>
           <h1 style={{ fontSize: "clamp(38px, 6vw, 66px)", margin: "0 auto 22px", maxWidth: 700 }}>
             Bring a <span className="squiggle">real author</span> to your classroom.
@@ -29,21 +66,8 @@ export default function Home() {
             <Link href="/apply" className="btn btn-ghost btn-lg">I'm an author →</Link>
           </div>
 
-          {/* Tilted book row */}
-          <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 56, alignItems: "flex-end" }}>
-            {[
-              { color: "#C7522A", rot: -8, title: "My Big World" },
-              { color: "#2E8B6F", rot: -3, title: "Storm Riders" },
-              { color: "#3A5A8C", rot: 2, title: "The Bee Why" },
-              { color: "#E2A93B", rot: 7, title: "Iron Compass" },
-            ].map((b, i) => (
-              <div key={i} style={{ transform: `rotate(${b.rot}deg)`, width: 80, transition: "transform .2s" }}
-                className="book-tilt"
-              >
-                <BookCover color={b.color} title={b.title} />
-              </div>
-            ))}
-          </div>
+          {/* Rotating book shelf */}
+          <BookCarousel books={carouselBooks} />
         </div>
       </section>
 
@@ -58,9 +82,9 @@ export default function Home() {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 24 }} className="how-grid">
             {[
-              { n: "1", color: "var(--orange)", title: "Tell us what you need", body: "Share your grade level, format preference, dates, and budget — including whether you're hoping for a volunteer visit." },
-              { n: "2", color: "var(--green)", title: "Get matched with authors", body: "We surface authors who fit your school's needs, location, and budget. Filter by grade, format, and more." },
-              { n: "3", color: "var(--blue)", title: "Book the big day", body: "Connect directly with your match, confirm details, and get ready for a day your students will remember for years." },
+              { n: "1", color: "var(--orange)", title: "Find authors near you", body: "Search by your ZIP, grade level, and format. Local authors mean no travel costs — especially important for grant-funded visits." },
+              { n: "2", color: "var(--green)", title: "Compare and shortlist", body: "Browse vetted, published authors who fit your school's needs. Filter for Title I rates, free virtual Q&As, and volunteer visits." },
+              { n: "3", color: "var(--blue)", title: "Reach out directly", body: "Click “Request Pricing & Availability” to connect with the author or their agent, confirm details, and book the big day." },
             ].map((s) => (
               <div key={s.n} className="card" style={{ padding: 32 }}>
                 <div style={{
@@ -89,16 +113,16 @@ export default function Home() {
               <div className="eyebrow" style={{ color: "var(--orange-deep)", marginBottom: 14 }}>For Educators</div>
               <h2 style={{ fontSize: "clamp(24px, 3vw, 34px)", marginBottom: 14 }}>Find the perfect author for your class</h2>
               <p style={{ color: "var(--ink-soft)", marginBottom: 28, fontSize: 15.5 }}>
-                Browse vetted, published authors by grade level, format, and budget. Submit a request in minutes — free for your school, always.
+                Browse vetted, published authors by location, grade level, and format. Searching the directory is free for your school, always.
               </p>
-              <Link href="/request" className="btn btn-primary">Request a visit →</Link>
+              <Link href="/authors" className="btn btn-primary">Browse authors →</Link>
             </div>
             <div style={{ background: "var(--blue-tint)", borderRadius: 24, padding: "40px 36px", position: "relative", overflow: "hidden" }}>
               <div style={{ position: "absolute", right: -20, bottom: -20, width: 140, height: 140, borderRadius: "50%", background: "rgba(58,90,140,.12)" }} />
               <div className="eyebrow" style={{ color: "var(--blue-deep)", marginBottom: 14 }}>For Authors</div>
               <h2 style={{ fontSize: "clamp(24px, 3vw, 34px)", marginBottom: 14 }}>Share your story with the next generation</h2>
               <p style={{ color: "var(--ink-soft)", marginBottom: 28, fontSize: 15.5 }}>
-                Set your visit formats, pricing, and availability. Offer a few free visits per year to schools that need you most. We handle the matching.
+                Set your visit formats and availability — your fees stay private. Offer a few free visits per year to schools that need you most. We never take a commission.
               </p>
               <Link href="/apply" className="btn btn-white">Apply to join →</Link>
             </div>
@@ -165,21 +189,21 @@ export default function Home() {
             <div className="card" style={{ padding: 28, minWidth: 280 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
                 <span className="badge badge-grant">★ Grant visits</span>
-                <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>Marisol Vega</span>
+                <span style={{ fontSize: 13, color: "var(--ink-soft)" }}>How it works</span>
               </div>
               <div style={{ marginBottom: 8 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, fontWeight: 700, marginBottom: 6 }}>
-                  <span>3 of 5 grant visits remaining</span>
+                  <span>Grants cover the author's honorarium</span>
                 </div>
-                <div style={{ height: 8, borderRadius: 4, background: "var(--line)", overflow: "hidden" }}>
-                  <div style={{ width: "60%", height: "100%", background: "var(--green)", borderRadius: 4 }} />
+                <div style={{ fontSize: 13.5, color: "var(--ink-soft)", lineHeight: 1.5 }}>
+                  Travel isn't covered — so a <strong>local author</strong> stretches a grant furthest. Use the ZIP search to find authors near you.
                 </div>
               </div>
               <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 10 }}>
                 {[
-                  ["✓ Published", "3 Scholastic titles"],
-                  ["✓ Visit experience", "80+ schools visited"],
-                  ["✓ Background checked", "Cleared 2024"],
+                  ["✓ Published", "Traditional houses"],
+                  ["✓ Visit experience", "Vetted for schools"],
+                  ["✓ Background checked", "Before listing"],
                 ].map(([label, sub]) => (
                   <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--line-soft)" }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: "var(--green-deep)" }}>{label}</span>
@@ -193,19 +217,22 @@ export default function Home() {
         <style>{`.grant-grid { @media (max-width: 860px) { grid-template-columns: 1fr !important; } }`}</style>
       </section>
 
-      {/* ── Quote + stats ── */}
+      {/* ── Why it matters (cited data) ── */}
       <section className="section" style={{ textAlign: "center" }}>
-        <div className="container" style={{ maxWidth: 760 }}>
-          <blockquote style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: "clamp(22px, 3vw, 32px)", lineHeight: 1.35, margin: "0 0 12px" }}>
-            "An author visit is one of the few things that can open <span className="squiggle">doors</span> to reading that nothing else can."
-          </blockquote>
-          <cite style={{ fontStyle: "normal", fontSize: 14, color: "var(--ink-faint)", fontWeight: 600 }}>— School Library Journal</cite>
+        <div className="container" style={{ maxWidth: 820 }}>
+          <div className="eyebrow" style={{ justifyContent: "center", color: "var(--orange-deep)", marginBottom: 16 }}>Why it matters</div>
+          <h2 style={{ fontSize: "clamp(24px, 3.2vw, 36px)", lineHeight: 1.2, margin: "0 auto 14px", maxWidth: 640 }}>
+            Kids read more when reading feels like an <span className="squiggle">event</span> — and when someone they trust sparks it.
+          </h2>
+          <p style={{ color: "var(--ink-soft)", maxWidth: 560, margin: "0 auto", fontSize: 15.5 }}>
+            Reading for fun drops sharply after age 9. A real author in the room turns reading into something kids want to do.
+          </p>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32, marginTop: 56 }} className="stats-grid">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 32, marginTop: 48 }} className="stats-grid">
             {[
-              { n: "73%", label: "of students read more after an author visit", color: "var(--orange)" },
-              { n: "9 in 10", label: "teachers say visits spark lasting excitement", color: "var(--green)" },
-              { n: "1,900+", label: "visits matched through our network", color: "var(--blue)" },
+              { n: "52%", label: "of kids say they enjoy going to community events that involve reading", color: "var(--orange)" },
+              { n: "70%", label: "of kids name a teacher or school librarian as someone who encourages them to read for fun", color: "var(--green)" },
+              { n: "63%", label: "of kids get most of their books from a public, school, or classroom library", color: "var(--blue)" },
             ].map((s) => (
               <div key={s.n}>
                 <div style={{ fontFamily: "'Young Serif', Georgia, serif", fontSize: "clamp(32px, 5vw, 52px)", color: s.color, lineHeight: 1 }}>{s.n}</div>
@@ -213,6 +240,9 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 28 }}>
+            Source: <a href="https://www.scholastic.com/content/corp-home/kids-and-family-reading-report/key-findings.html" target="_blank" rel="noopener noreferrer" style={{ color: "var(--ink-faint)", textDecoration: "underline" }}>Scholastic Kids &amp; Family Reading Report</a>, 8th edition (2023).
+          </p>
         </div>
         <style>{`.stats-grid { @media (max-width: 640px) { grid-template-columns: 1fr !important; } }`}</style>
       </section>
@@ -225,7 +255,7 @@ export default function Home() {
             textAlign: "center", position: "relative", overflow: "hidden",
           }}>
             {/* Accent dots */}
-            {[["-30px", "-30px", "var(--orange-tint)"], ["right:-30px", "top:-30px", "var(--green-tint)"]].map((_, i) => (
+            {[0, 1].map((i) => (
               <div key={i} style={{
                 position: "absolute", width: 120, height: 120, borderRadius: "50%",
                 background: i === 0 ? "rgba(232,116,59,.15)" : "rgba(46,139,111,.15)",
