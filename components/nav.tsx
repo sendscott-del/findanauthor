@@ -56,6 +56,12 @@ export default function Nav() {
               {label}
             </Link>
           ))}
+          <Link href="/login" style={{
+            fontFamily: "'Mulish', sans-serif", fontWeight: 700, fontSize: 14.5,
+            color: "var(--ink-soft)", textDecoration: "none",
+          }} className="hover:text-ink">
+            Sign in
+          </Link>
           <Link href="/authors" className="btn btn-primary btn-sm">Find an author</Link>
         </div>
 
@@ -92,6 +98,13 @@ export default function Nav() {
               {label}
             </Link>
           ))}
+          <Link href="/login" onClick={() => setOpen(false)} style={{
+            display: "block", fontFamily: "'Mulish', sans-serif", fontWeight: 700,
+            fontSize: 17, color: "var(--ink)", textDecoration: "none", padding: "12px 0",
+            borderBottom: "1px solid var(--line-soft)",
+          }}>
+            Author sign in
+          </Link>
           <div style={{ marginTop: 20 }}>
             <Link href="/authors" className="btn btn-primary btn-block" onClick={() => setOpen(false)}>
               Find an author

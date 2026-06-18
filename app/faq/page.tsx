@@ -59,6 +59,17 @@ const AUTHOR_FAQS: [string, React.ReactNode][] = [
     "How do I get the “Founding Author” badge on my profile?",
     "The Founding Author designation is an exclusive badge awarded to creators who join us during our initial launch and beta-testing phase. Once this phase closes, new profiles will feature our standard verified creator layout.",
   ],
+  [
+    "How do I edit my profile after it's live?",
+    <>
+      <p style={{ margin: "0 0 12px" }}>
+        Click <strong>Sign in</strong> in the top menu and enter the email on your author profile. We&apos;ll email you a secure one-tap sign-in link — there&apos;s no password to remember.
+      </p>
+      <p style={{ margin: 0 }}>
+        Once you&apos;re in, your dashboard lets you update your bio, photo, location, visit formats, website and booking links, and your subsidy/Q&A offers any time. Changes go live on your public page immediately.
+      </p>
+    </>,
+  ],
 ];
 
 function Accordion({ items }: { items: [string, React.ReactNode][] }) {

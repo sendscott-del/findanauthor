@@ -8,9 +8,20 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.4.0";
+export const CURRENT_VERSION = "0.5.0";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.5.0",
+    date: "2026-06-17",
+    changes: [
+      "Author accounts: passwordless magic-link sign-in (/login) via Supabase Auth.",
+      "Author self-service dashboard (/dashboard) — authors can edit their own bio, photo, location, visit formats, links, and offer flags any time.",
+      "Ownership-enforced profile updates (authors can only edit their own listing; slug/status/founding flags stay admin-only).",
+      "\"Sign in\" added to the main nav.",
+      "Migration 004: wfr_authors.user_id links auth users to profiles.",
+    ],
+  },
   {
     version: "0.4.0",
     date: "2026-06-17",
