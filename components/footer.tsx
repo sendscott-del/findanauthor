@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CURRENT_VERSION } from "@/constants/changelog";
 
 export default function Footer() {
   return (
@@ -72,7 +73,7 @@ export default function Footer() {
           fontSize: 13,
           color: "rgba(233,222,203,.5)",
         }}>
-          <span>© 2025 Writers for Readers · findanauthor.org</span>
+          <span>© 2025 Writers for Readers · findanauthor.org · v{CURRENT_VERSION}</span>
           <div style={{ display: "flex", gap: 20 }}>
             {[["Privacy", "/privacy"], ["Terms", "/terms"], ["Child safety", "/safety"]].map(([l, h]) => (
               <Link key={h} href={h} style={{ color: "rgba(233,222,203,.5)", textDecoration: "none" }}>{l}</Link>
