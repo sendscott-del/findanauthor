@@ -5,7 +5,6 @@ import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 function LoginInner() {
   const params = useSearchParams();
-  const next = params.get("next") || "/dashboard";
   const linkError = params.get("error") === "link";
 
   const [email, setEmail] = useState("");
@@ -19,7 +18,9 @@ function LoginInner() {
     setMessage("");
     try {
       const supabase = createSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      // Clean callback URL (no query string) so it matches an exact entry in the
+      // Supabase redirect allow-list. The callback defaults to /dashboard.
+      const redirectTo = `${window.location.origin}/auth/callback`;
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
