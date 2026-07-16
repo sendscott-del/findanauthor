@@ -41,14 +41,18 @@ export default function AuthorDirectory() {
     if (localOnly && locationActive) list = list.filter((a) => a.within_local_zone);
     if (genreFilters.length) list = list.filter((a) => a.genres?.some((g) => genreFilters.includes(g)));
 
-    if (sort === "grant") list = [...list].sort((a, b) => (b.offers_grant_visits ? 1 : 0) - (a.offers_grant_visits ? 1 : 0));
-    if (sort === "nearest" || (locationActive && sort === "best")) {
-      list = [...list].sort((a, b) => {
-        const da = a.distance_miles ?? Infinity;
-        const db = b.distance_miles ?? Infinity;
-        return da - db;
-      });
+    // Founding authors always rank first within the matched set; the selected
+    // sort orders authors inside each group.
+    const foundingRank = (a: Author) => (a.founding_author ? 0 : 1);
+    let within: (a: Author, b: Author) => number;
+    if (sort === "grant") {
+      within = (a, b) => (b.offers_grant_visits ? 1 : 0) - (a.offers_grant_visits ? 1 : 0);
+    } else if (sort === "nearest" || (locationActive && sort === "best")) {
+      within = (a, b) => (a.distance_miles ?? Infinity) - (b.distance_miles ?? Infinity);
+    } else {
+      within = (a, b) => (a.name ?? "").localeCompare(b.name ?? "");
     }
+    list = [...list].sort((a, b) => foundingRank(a) - foundingRank(b) || within(a, b));
     return list;
   }, [authors, grades, formats, grantOnly, title1Only, freeQaOnly, localOnly, locationActive, genreFilters, sort]);
 

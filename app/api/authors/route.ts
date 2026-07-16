@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
     if (grade) query = query.contains("grade_range", [grade]);
     const grant = searchParams.get("grant");
     if (grant === "true") query = query.eq("offers_grant_visits", true);
-    const { data, error } = await query.order("name");
+    // Founding authors surface first, then alphabetical.
+    const { data, error } = await query
+      .order("founding_author", { ascending: false })
+      .order("name");
     if (error) throw error;
     return NextResponse.json(withDistance(data ?? [], zip));
   } catch {

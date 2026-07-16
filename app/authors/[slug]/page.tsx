@@ -63,8 +63,13 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 Author headshot
               </span>
             )}
+            {author.founding_author && (
+              <div className="badge badge-founding" style={{ position: "absolute", top: 12, left: 12 }}>
+                ✦ Founding Author
+              </div>
+            )}
             {author.offers_grant_visits && (
-              <div className="badge badge-grant" style={{ position: "absolute", top: 12, left: 12 }}>
+              <div className="badge badge-grant" style={{ position: "absolute", bottom: 12, left: 12 }}>
                 ★ Grant visits open
               </div>
             )}
@@ -80,6 +85,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
 
             {/* Badge row */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginBottom: 22 }}>
+              {author.founding_author && <span className="badge badge-founding">✦ Founding Author</span>}
               {author.grade_range?.map((g) => (
                 <span key={g} className="badge badge-grade">{g}</span>
               ))}

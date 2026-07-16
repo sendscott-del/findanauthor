@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { Author } from "@/lib/types";
+import BookCover from "@/components/book-cover";
 
 const GRADE_OPTIONS = ["Pre-K", "K", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th"];
 const FORMAT_OPTIONS = [
@@ -8,6 +9,17 @@ const FORMAT_OPTIONS = [
   { value: "in_person_classroom", label: "In-person classroom" },
   { value: "virtual", label: "Virtual" },
 ];
+
+const MAX_BOOKS = 10;
+const COVER_COLORS = ["#E8743B", "#2E8B6F", "#3A5A8C", "#E2A93B", "#7C6A9C", "#CE5C26", "#226C56", "#B84A4A"];
+const BOOK_TYPES = [
+  { value: "picture_book", label: "Picture book" },
+  { value: "middle_grade", label: "Middle grade" },
+  { value: "young_adult", label: "Young adult" },
+  { value: "nonfiction", label: "Nonfiction" },
+];
+
+type BookRow = { title: string; publisher: string; year: string; isbn: string; cover_color: string; type: string };
 
 const labelStyle: React.CSSProperties = { display: "block", fontWeight: 700, fontSize: 14, color: "var(--ink)", marginBottom: 7 };
 const inputStyle: React.CSSProperties = {
@@ -38,6 +50,14 @@ export default function DashboardForm({ author, email }: { author: Author; email
     languages: csv(author.languages) || "English",
     genres: csv(author.genres),
     themes: csv(author.themes),
+    books: (author.books ?? []).slice(0, MAX_BOOKS).map((b): BookRow => ({
+      title: b.title ?? "",
+      publisher: b.publisher ?? "",
+      year: b.year ? String(b.year) : "",
+      isbn: b.isbn ?? "",
+      cover_color: b.cover_color ?? COVER_COLORS[0],
+      type: b.type ?? "picture_book",
+    })),
   });
 
   const [uploading, setUploading] = useState(false);
@@ -54,6 +74,26 @@ export default function DashboardForm({ author, email }: { author: Author; email
       const arr = prev[field] as string[];
       return { ...prev, [field]: arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val] };
     });
+    setResult("idle");
+  }
+  function addBook() {
+    setForm((prev) => {
+      if (prev.books.length >= MAX_BOOKS) return prev;
+      const color = COVER_COLORS[prev.books.length % COVER_COLORS.length];
+      const next: BookRow = { title: "", publisher: "", year: "", isbn: "", cover_color: color, type: "picture_book" };
+      return { ...prev, books: [...prev.books, next] };
+    });
+    setResult("idle");
+  }
+  function removeBook(idx: number) {
+    setForm((prev) => ({ ...prev, books: prev.books.filter((_, i) => i !== idx) }));
+    setResult("idle");
+  }
+  function updateBook(idx: number, field: keyof BookRow, value: string) {
+    setForm((prev) => ({
+      ...prev,
+      books: prev.books.map((b, i) => (i === idx ? { ...b, [field]: value } : b)),
+    }));
     setResult("idle");
   }
 
@@ -143,6 +183,91 @@ export default function DashboardForm({ author, email }: { author: Author; email
         <div style={fieldGap}>
           <label style={labelStyle}>Bio</label>
           <textarea style={{ ...inputStyle, minHeight: 130, resize: "vertical" }} value={form.bio} onChange={(e) => set("bio", e.target.value)} />
+        </div>
+
+        {/* Books */}
+        <div style={fieldGap}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+            <span style={labelStyle}>Your books</span>
+            <span style={{ fontSize: 12.5, color: "var(--ink-faint)", fontWeight: 700 }}>{form.books.length} of {MAX_BOOKS}</span>
+          </div>
+          <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 0, marginBottom: 12 }}>
+            Add up to {MAX_BOOKS} titles. These appear on your public profile.
+          </p>
+
+          <div style={{ display: "grid", gap: 12 }}>
+            {form.books.map((book, idx) => (
+              <div key={idx} style={{ border: "1.5px solid var(--line)", borderRadius: 12, padding: 14, background: "#fff", display: "flex", gap: 14 }}>
+                {/* Live cover preview */}
+                <div style={{ width: 52, flexShrink: 0 }}>
+                  <BookCover color={book.cover_color} title={book.title} />
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 10 }}>
+                  <input
+                    style={inputStyle}
+                    value={book.title}
+                    onChange={(e) => updateBook(idx, "title", e.target.value)}
+                    placeholder="Book title"
+                  />
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+                    <input
+                      style={inputStyle}
+                      value={book.publisher}
+                      onChange={(e) => updateBook(idx, "publisher", e.target.value)}
+                      placeholder="Publisher"
+                    />
+                    <input
+                      style={inputStyle}
+                      inputMode="numeric"
+                      value={book.year}
+                      onChange={(e) => updateBook(idx, "year", e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="Year"
+                    />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center" }}>
+                    <select style={inputStyle} value={book.type} onChange={(e) => updateBook(idx, "type", e.target.value)}>
+                      {BOOK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeBook(idx)}
+                      className="btn btn-ghost btn-sm"
+                      style={{ color: "#8a1c12", whiteSpace: "nowrap" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  {/* Cover color */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 12, color: "var(--ink-faint)", fontWeight: 700 }}>Cover color</span>
+                    {COVER_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        aria-label={`Cover color ${c}`}
+                        onClick={() => updateBook(idx, "cover_color", c)}
+                        style={{
+                          width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer",
+                          border: book.cover_color === c ? "3px solid var(--ink)" : "2px solid var(--line)",
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {form.books.length < MAX_BOOKS ? (
+            <button type="button" onClick={addBook} className="btn btn-ghost btn-sm" style={{ marginTop: 12 }}>
+              + Add {form.books.length === 0 ? "a book" : "another book"}
+            </button>
+          ) : (
+            <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 12 }}>
+              You&apos;ve reached the {MAX_BOOKS}-book limit. Remove one to add a different title.
+            </p>
+          )}
         </div>
 
         <div style={{ ...fieldGap, display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14 }}>

@@ -180,6 +180,7 @@ h1, h2, h3, h4 {
 .badge-grade { background: #efe6d3; color: var(--ink-soft); }
 .badge-verified { background: var(--blue-tint); color: var(--blue-deep); }
 .badge-grant { background: var(--green); color: white; box-shadow: 0 2px 0 var(--green-deep); }
+.badge-founding { background: var(--gold); color: #4A3410; box-shadow: 0 2px 0 #B9861F; }
 
 /* Chips */
 .chip {

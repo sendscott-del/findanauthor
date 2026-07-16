@@ -8,9 +8,19 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.5.0";
+export const CURRENT_VERSION = "0.6.0";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.0",
+    date: "2026-07-16",
+    changes: [
+      "Authors can now add up to 10 books on their profile — add, edit, reorder-by-remove, pick a cover color, and set the book type, all from the dashboard.",
+      "Founding Author status: admins can grant it from the new Authors admin page (/admin/authors).",
+      "Founding authors get a gold \"✦ Founding Author\" badge on their public profile and directory card, and rank first in directory search results.",
+      "New admin Authors screen (fixes the previously broken \"Active Authors\" link) — manage founding status and listing status per author.",
+    ],
+  },
   {
     version: "0.5.0",
     date: "2026-06-17",

@@ -2,6 +2,15 @@
 
 Append-only. Newest entry first. Add an entry at the end of every working session: date, what changed, any infra facts that moved.
 
+## 2026-07-16 — Multi-book profiles + Founding Author status (v0.6.0)
+
+- Authors can now add up to 10 books from `/dashboard` (title, publisher, year, type, cover color). Editor caps at 10; server (`/api/account/update`) re-validates and hard-caps, drops empty rows. `books` was already a `jsonb` array — no schema change.
+- Founding Author status is now real (0.4.0 changelog claimed a badge but nothing was wired up). `founding_author` boolean already existed on `wfr_authors` — no schema change.
+  - Public: gold "✦ Founding Author" badge on profile (`/authors/[slug]`) + directory card; founding authors rank first in `/api/authors` and in the directory's client-side sort within every mode.
+  - Admin: new `/admin/authors` page (fixes the previously broken "Active Authors" link) with a founding toggle + listing-status control, backed by new `GET/POST /api/admin/authors` (admin-cookie gated, whitelisted fields).
+- Verified live schema on `jgoivwfejtfpbngsusgq`: `books` (jsonb) + `founding_author` (boolean) both present.
+- No local build possible on this machine (Node not installed) — verification is via Vercel deploy.
+
 ## 2026-07-15 — Doc system initialized (history reconstructed from git)
 
 - 18 commits to date; currently v0.5.0.

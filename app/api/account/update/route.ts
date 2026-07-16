@@ -6,6 +6,34 @@ function splitCSV(val: string) {
   return val.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
+const MAX_BOOKS = 10;
+const BOOK_TYPES = ["picture_book", "middle_grade", "young_adult", "nonfiction"];
+
+function sanitizeBooks(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b) => (b ?? {}) as Record<string, unknown>)
+    .map((b) => {
+      const title = String(b.title ?? "").trim();
+      const publisher = String(b.publisher ?? "").trim();
+      const isbn = String(b.isbn ?? "").trim();
+      const yearNum = parseInt(String(b.year ?? ""), 10);
+      const color = String(b.cover_color ?? "");
+      const type = BOOK_TYPES.includes(String(b.type)) ? String(b.type) : "picture_book";
+      const book: Record<string, unknown> = {
+        title,
+        cover_color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#E8743B",
+        type,
+      };
+      if (publisher) book.publisher = publisher;
+      if (isbn) book.isbn = isbn;
+      if (Number.isFinite(yearNum) && yearNum > 0) book.year = yearNum;
+      return book;
+    })
+    .filter((b) => (b.title as string).length > 0) // drop empty rows
+    .slice(0, MAX_BOOKS); // hard cap
+}
+
 function buildOfferings(form: Record<string, unknown>) {
   const formats = (form.visit_formats as string[]) ?? [];
   const offerings: Record<string, unknown>[] = [];
@@ -66,6 +94,7 @@ export async function POST(req: NextRequest) {
     languages: splitCSV(form.languages || "English"),
     genres: splitCSV(form.genres || ""),
     themes: splitCSV(form.themes || ""),
+    books: sanitizeBooks(form.books),
   };
 
   const { error: updErr } = await db.from("wfr_authors").update(update).eq("id", author.id);
