@@ -8,9 +8,18 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.1";
+export const CURRENT_VERSION = "0.6.2";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.2",
+    date: "2026-07-16",
+    changes: [
+      "Removed the sample/placeholder authors and demo book covers — the site now shows only real author profiles.",
+      "Directory, homepage featured authors, and the book carousel are real-data only (no seed fallback).",
+      "Request page now looks up the real author by slug (the pre-fill previously only recognized sample authors).",
+    ],
+  },
   {
     version: "0.6.1",
     date: "2026-07-16",

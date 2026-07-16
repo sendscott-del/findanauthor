@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverClient } from "@/lib/supabase";
 import { geocodeZip, geocodeCityState, haversineMiles } from "@/lib/geo";
-import type { Author } from "@/lib/types";
 
 /** Attach distance_miles + within_local_zone when a ZIP is provided. */
 function withDistance(authors: any[], zip: string | null) {
@@ -37,8 +36,7 @@ export async function GET(req: NextRequest) {
     if (error) throw error;
     return NextResponse.json(withDistance(data ?? [], zip));
   } catch {
-    // Return seed data if DB not configured
-    const { SEED_AUTHORS } = await import("@/lib/seed-data");
-    return NextResponse.json(withDistance(SEED_AUTHORS as Partial<Author>[], zip));
+    // No sample fallback — an empty directory is better than showing fake authors.
+    return NextResponse.json([]);
   }
 }

@@ -2,16 +2,28 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { SEED_AUTHORS } from "@/lib/seed-data";
 import { BudgetType, VisitKind } from "@/lib/types";
 import { CheckCircle } from "lucide-react";
 
 const STEPS = ["Your school", "The visit", "Budget", "Your hopes", "Review"];
 
+type RequestedAuthor = { slug?: string; name?: string; tagline?: string };
+
 function RequestForm() {
   const params = useSearchParams();
   const authorSlug = params.get("author");
-  const author = SEED_AUTHORS.find((a) => a.slug === authorSlug);
+  const [author, setAuthor] = useState<RequestedAuthor | null>(null);
+
+  // Look up the real author (by slug) from the live directory for the pre-fill banner.
+  useEffect(() => {
+    if (!authorSlug) { setAuthor(null); return; }
+    fetch("/api/authors")
+      .then((r) => r.json())
+      .then((list: RequestedAuthor[]) => {
+        setAuthor(Array.isArray(list) ? list.find((a) => a.slug === authorSlug) ?? null : null);
+      })
+      .catch(() => setAuthor(null));
+  }, [authorSlug]);
 
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -83,7 +95,7 @@ function RequestForm() {
       await fetch("/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, author_id: author?.slug }),
+        body: JSON.stringify({ ...form, author_id: authorSlug ?? author?.slug }),
       });
       setSubmitted(true);
     } catch {

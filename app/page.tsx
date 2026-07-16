@@ -1,7 +1,6 @@
 import Link from "next/link";
 import AuthorCard from "@/components/author-card";
 import BookCarousel, { CarouselBook } from "@/components/book-carousel";
-import { SEED_AUTHORS } from "@/lib/seed-data";
 import { serverClient } from "@/lib/supabase";
 import { Author } from "@/lib/types";
 
@@ -14,34 +13,25 @@ async function getFeatured(): Promise<Partial<Author>[]> {
       .from("wfr_authors")
       .select("*")
       .eq("status", "active")
+      .order("founding_author", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(8);
     if (error) throw error;
-    if (data && data.length) return data;
+    return data ?? [];
   } catch {
-    /* fall through to seed */
+    return [];
   }
-  return SEED_AUTHORS;
 }
 
 export default async function Home() {
   const all = await getFeatured();
   const featured = all.slice(0, 4);
 
-  // Build the carousel from real book covers (fall back to seed colours).
-  const books: CarouselBook[] = all
+  // Carousel is built only from real authors' books; no sample fallback.
+  const carouselBooks: CarouselBook[] = all
     .flatMap((a) => (a.books ?? []).map((b) => ({ color: b.cover_color, title: b.title, imageUrl: b.cover_url })))
-    .filter((b) => b.color || b.imageUrl);
-  const carouselBooks: CarouselBook[] = (books.length >= 6 ? books : [
-    { color: "#C7522A", title: "My Big World" },
-    { color: "#2E8B6F", title: "Storm Riders" },
-    { color: "#3A5A8C", title: "The Bee Why" },
-    { color: "#E2A93B", title: "Iron Compass" },
-    { color: "#7C6A9C", title: "Words That Break Walls" },
-    { color: "#C7522A", title: "The Color of Home" },
-    { color: "#2E8B6F", title: "Every Poem Is a Fist" },
-    { color: "#3A5A8C", title: "The Last Cartographer" },
-  ]).slice(0, 12);
+    .filter((b) => b.color || b.imageUrl)
+    .slice(0, 12);
 
   return (
     <>
