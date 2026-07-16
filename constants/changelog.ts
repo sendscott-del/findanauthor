@@ -8,9 +8,17 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.0";
+export const CURRENT_VERSION = "0.6.1";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.1",
+    date: "2026-07-16",
+    changes: [
+      "Authors can upload a real cover image for each book (up to 10) from the dashboard; the styled color cover stays as a fallback when no image is uploaded.",
+      "Uploaded covers show on the public profile, directory cards, and the homepage book carousel.",
+    ],
+  },
   {
     version: "0.6.0",
     date: "2026-07-16",

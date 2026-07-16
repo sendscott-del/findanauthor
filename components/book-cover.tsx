@@ -2,9 +2,33 @@ interface Props {
   color: string;
   title?: string;
   width?: number;
+  imageUrl?: string;
 }
 
-export default function BookCover({ color, title, width = 80 }: Props) {
+export default function BookCover({ color, title, width = 80, imageUrl }: Props) {
+  // When a real cover image is uploaded, show it instead of the styled color cover.
+  if (imageUrl) {
+    return (
+      <div
+        className="cover"
+        style={{
+          width: "100%",
+          aspectRatio: "2/3",
+          borderRadius: "3px 8px 8px 3px",
+          boxShadow: "var(--shadow-m)",
+          position: "relative",
+          overflow: "hidden",
+          background: color,
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={imageUrl} alt={title ?? ""} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+        {/* Spine shadow over the image */}
+        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 7, background: "rgba(0,0,0,.18)", zIndex: 1 }} />
+      </div>
+    );
+  }
+
   return (
     <div
       className="cover"

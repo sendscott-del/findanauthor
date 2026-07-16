@@ -30,8 +30,8 @@ export default async function Home() {
 
   // Build the carousel from real book covers (fall back to seed colours).
   const books: CarouselBook[] = all
-    .flatMap((a) => (a.books ?? []).map((b) => ({ color: b.cover_color, title: b.title })))
-    .filter((b) => b.color);
+    .flatMap((a) => (a.books ?? []).map((b) => ({ color: b.cover_color, title: b.title, imageUrl: b.cover_url })))
+    .filter((b) => b.color || b.imageUrl);
   const carouselBooks: CarouselBook[] = (books.length >= 6 ? books : [
     { color: "#C7522A", title: "My Big World" },
     { color: "#2E8B6F", title: "Storm Riders" },

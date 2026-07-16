@@ -10,6 +10,7 @@ export interface Book {
   publisher?: string;
   isbn?: string;
   cover_color: string;
+  cover_url?: string; // uploaded cover image; falls back to cover_color when absent
   type: "picture_book" | "middle_grade" | "young_adult" | "nonfiction";
 }
 

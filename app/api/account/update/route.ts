@@ -19,6 +19,7 @@ function sanitizeBooks(raw: unknown) {
       const isbn = String(b.isbn ?? "").trim();
       const yearNum = parseInt(String(b.year ?? ""), 10);
       const color = String(b.cover_color ?? "");
+      const coverUrl = String(b.cover_url ?? "").trim();
       const type = BOOK_TYPES.includes(String(b.type)) ? String(b.type) : "picture_book";
       const book: Record<string, unknown> = {
         title,
@@ -28,6 +29,10 @@ function sanitizeBooks(raw: unknown) {
       if (publisher) book.publisher = publisher;
       if (isbn) book.isbn = isbn;
       if (Number.isFinite(yearNum) && yearNum > 0) book.year = yearNum;
+      // Only accept our own Supabase Storage URLs for covers.
+      if (/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\//i.test(coverUrl)) {
+        book.cover_url = coverUrl;
+      }
       return book;
     })
     .filter((b) => (b.title as string).length > 0) // drop empty rows

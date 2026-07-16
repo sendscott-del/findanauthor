@@ -135,7 +135,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }} className="books-grid">
                   {author.books?.map((b, i) => (
                     <div key={i} style={{ textAlign: "center" }}>
-                      <BookCover color={b.cover_color} title={b.title} />
+                      <BookCover color={b.cover_color} title={b.title} imageUrl={b.cover_url} />
                       <div style={{ fontSize: 12.5, fontWeight: 700, marginTop: 8, color: "var(--ink-soft)" }}>{b.title}</div>
                       {b.publisher && <div style={{ fontSize: 11.5, color: "var(--ink-faint)" }}>{b.publisher}{b.year ? `, ${b.year}` : ""}</div>}
                     </div>

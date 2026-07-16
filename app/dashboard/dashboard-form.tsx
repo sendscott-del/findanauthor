@@ -19,7 +19,7 @@ const BOOK_TYPES = [
   { value: "nonfiction", label: "Nonfiction" },
 ];
 
-type BookRow = { title: string; publisher: string; year: string; isbn: string; cover_color: string; type: string };
+type BookRow = { title: string; publisher: string; year: string; isbn: string; cover_color: string; cover_url: string; type: string };
 
 const labelStyle: React.CSSProperties = { display: "block", fontWeight: 700, fontSize: 14, color: "var(--ink)", marginBottom: 7 };
 const inputStyle: React.CSSProperties = {
@@ -56,11 +56,13 @@ export default function DashboardForm({ author, email }: { author: Author; email
       year: b.year ? String(b.year) : "",
       isbn: b.isbn ?? "",
       cover_color: b.cover_color ?? COVER_COLORS[0],
+      cover_url: b.cover_url ?? "",
       type: b.type ?? "picture_book",
     })),
   });
 
   const [uploading, setUploading] = useState(false);
+  const [bookUploading, setBookUploading] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<"idle" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -80,7 +82,7 @@ export default function DashboardForm({ author, email }: { author: Author; email
     setForm((prev) => {
       if (prev.books.length >= MAX_BOOKS) return prev;
       const color = COVER_COLORS[prev.books.length % COVER_COLORS.length];
-      const next: BookRow = { title: "", publisher: "", year: "", isbn: "", cover_color: color, type: "picture_book" };
+      const next: BookRow = { title: "", publisher: "", year: "", isbn: "", cover_color: color, cover_url: "", type: "picture_book" };
       return { ...prev, books: [...prev.books, next] };
     });
     setResult("idle");
@@ -95,6 +97,23 @@ export default function DashboardForm({ author, email }: { author: Author; email
       books: prev.books.map((b, i) => (i === idx ? { ...b, [field]: value } : b)),
     }));
     setResult("idle");
+  }
+  async function handleBookCoverUpload(idx: number, file: File | undefined) {
+    if (!file) return;
+    setBookUploading(idx);
+    setMessage("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload-photo", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      updateBook(idx, "cover_url", json.url);
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "Cover upload failed");
+    } finally {
+      setBookUploading(null);
+    }
   }
 
   async function handlePhotoUpload(file: File | undefined) {
@@ -192,15 +211,34 @@ export default function DashboardForm({ author, email }: { author: Author; email
             <span style={{ fontSize: 12.5, color: "var(--ink-faint)", fontWeight: 700 }}>{form.books.length} of {MAX_BOOKS}</span>
           </div>
           <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 0, marginBottom: 12 }}>
-            Add up to {MAX_BOOKS} titles. These appear on your public profile.
+            Add up to {MAX_BOOKS} titles. Upload each book&apos;s cover image, or pick a color if you don&apos;t have one. These appear on your public profile.
           </p>
 
           <div style={{ display: "grid", gap: 12 }}>
             {form.books.map((book, idx) => (
               <div key={idx} style={{ border: "1.5px solid var(--line)", borderRadius: 12, padding: 14, background: "#fff", display: "flex", gap: 14 }}>
-                {/* Live cover preview */}
-                <div style={{ width: 52, flexShrink: 0 }}>
-                  <BookCover color={book.cover_color} title={book.title} />
+                {/* Live cover preview + upload */}
+                <div style={{ width: 72, flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <BookCover color={book.cover_color} title={book.title} imageUrl={book.cover_url || undefined} />
+                  <label className="btn btn-ghost btn-sm" style={{ cursor: "pointer", fontSize: 11, padding: "5px 6px", textAlign: "center", lineHeight: 1.2 }}>
+                    {bookUploading === idx ? "Uploading…" : book.cover_url ? "Replace" : "Upload cover"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      disabled={bookUploading !== null}
+                      onChange={(e) => handleBookCoverUpload(idx, e.target.files?.[0])}
+                    />
+                  </label>
+                  {book.cover_url && (
+                    <button
+                      type="button"
+                      onClick={() => updateBook(idx, "cover_url", "")}
+                      style={{ background: "none", border: "none", color: "var(--ink-faint)", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0 }}
+                    >
+                      Remove cover
+                    </button>
+                  )}
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 10 }}>
@@ -238,9 +276,11 @@ export default function DashboardForm({ author, email }: { author: Author; email
                       Remove
                     </button>
                   </div>
-                  {/* Cover color */}
+                  {/* Cover color — fallback shown only when no image is uploaded */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 12, color: "var(--ink-faint)", fontWeight: 700 }}>Cover color</span>
+                    <span style={{ fontSize: 12, color: "var(--ink-faint)", fontWeight: 700 }}>
+                      {book.cover_url ? "Cover color (shown if image removed)" : "Cover color"}
+                    </span>
                     {COVER_COLORS.map((c) => (
                       <button
                         key={c}

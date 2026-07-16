@@ -4,6 +4,7 @@ import BookCover from "./book-cover";
 export interface CarouselBook {
   color: string;
   title?: string;
+  imageUrl?: string;
 }
 
 /** An infinitely-scrolling shelf of tilted book covers. */
@@ -22,7 +23,7 @@ export default function BookCarousel({ books }: { books: CarouselBook[] }) {
             className="bc-item"
             style={{ width: 90, flexShrink: 0, transform: `rotate(${tilts[i % tilts.length]}deg)` }}
           >
-            <BookCover color={b.color} title={b.title} />
+            <BookCover color={b.color} title={b.title} imageUrl={b.imageUrl} />
           </div>
         ))}
       </div>

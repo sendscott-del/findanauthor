@@ -75,7 +75,7 @@ export default function AuthorCard({ author, showGrantRing }: Props) {
             <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
               {author.books.slice(0, 3).map((b, i) => (
                 <div key={i} style={{ width: 36, flexShrink: 0 }}>
-                  <BookCover color={b.cover_color} />
+                  <BookCover color={b.cover_color} imageUrl={b.cover_url} />
                 </div>
               ))}
             </div>
