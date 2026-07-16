@@ -24,7 +24,7 @@ Liesl's "Writers for Readers" project: findanauthor.org matches children's/YA au
 - Author self-service: `/login` (magic link) → `/auth/callback` → `/dashboard` + `/profile/setup`.
 - Admin: `/admin` (requests, applications) behind password auth.
 - API routes under `/app/api/` (authors, requests, applications, profile, upload-photo, lookup-school, lookup-book, account, admin).
-- Migrations in `supabase/migrations/` (003 added subsidy/booking/Q&A columns).
+- Migrations in `supabase/migrations/` (003 added subsidy/booking/Q&A columns; 004 `user_id` was applied to the live DB on 2026-07-16 — see gotcha below).
 
 ## Rules for this repo
 
@@ -38,3 +38,4 @@ Liesl's "Writers for Readers" project: findanauthor.org matches children's/YA au
 - **Magic-link callback URL must be cleaned (query string dropped) before comparing against the Supabase redirect allow-list** — fixed in commit 4a513ac; don't regress it.
 - Redirect allow-list entries are exact URLs, no wildcards.
 - Env-var changes in Vercel need a redeploy to take effect (several past commits exist purely to trigger one).
+- **A migration file in `supabase/migrations/` does NOT mean it was applied to the live DB.** Migrations here are applied by hand via the Supabase SQL editor/dashboard, and 004 sat unapplied for weeks (broke every author dashboard save until 2026-07-16). Before shipping code that reads/writes a column, verify the column exists live (`information_schema.columns`), then apply the migration if missing.

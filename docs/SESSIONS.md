@@ -10,6 +10,9 @@ Append-only. Newest entry first. Add an entry at the end of every working sessio
   - Admin: new `/admin/authors` page (fixes the previously broken "Active Authors" link) with a founding toggle + listing-status control, backed by new `GET/POST /api/admin/authors` (admin-cookie gated, whitelisted fields).
 - Verified live schema on `jgoivwfejtfpbngsusgq`: `books` (jsonb) + `founding_author` (boolean) both present.
 - No local build possible on this machine (Node not installed) — verification is via Vercel deploy.
+- **Migration 004 (`wfr_authors.user_id`) had never actually been applied to the live DB** — surfaced when a dashboard save (adding books) errored with "column wfr_authors.user_id does not exist". Applied it 2026-07-16 via the Supabase SQL editor (add nullable `user_id uuid` FK + index). This means the v0.5.0 author dashboard had never successfully saved for anyone until now; profile editing (all fields, not just books) is unblocked as of this fix.
+- Deployed v0.6.0 to production (Vercel `dpl_B8tQKw…`, READY); footer confirms v0.6.0 live.
+- Infra note: GitHub push now works from this MacBook Air — a fine-grained/classic PAT with repo write is saved in the macOS Keychain (osxkeychain helper), so future `git push` is non-interactive.
 
 ## 2026-07-15 — Doc system initialized (history reconstructed from git)
 
