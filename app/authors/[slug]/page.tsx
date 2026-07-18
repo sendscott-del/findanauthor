@@ -63,14 +63,14 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
                 Author headshot
               </span>
             )}
-            {author.founding_author && (
-              <div className="badge badge-founding" style={{ position: "absolute", top: 12, left: 12 }}>
-                ✦ Founding Author
-              </div>
-            )}
-            {author.offers_grant_visits && (
-              <div className="badge badge-grant" style={{ position: "absolute", bottom: 12, left: 12 }}>
-                ★ Grant visits open
+            {(author.founding_author || author.offers_grant_visits) && (
+              <div style={{ position: "absolute", bottom: 12, left: 12, right: 12, display: "flex", flexWrap: "wrap", gap: 7 }}>
+                {author.founding_author && (
+                  <div className="badge badge-founding">✦ Founding Author</div>
+                )}
+                {author.offers_grant_visits && (
+                  <div className="badge badge-grant">★ Grant visits open</div>
+                )}
               </div>
             )}
           </div>

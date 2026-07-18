@@ -8,9 +8,16 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.2";
+export const CURRENT_VERSION = "0.6.3";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.3",
+    date: "2026-07-16",
+    changes: [
+      "Moved the Founding Author and grant-visit badges to the bottom of the author profile photo so they no longer cover faces.",
+    ],
+  },
   {
     version: "0.6.2",
     date: "2026-07-16",
