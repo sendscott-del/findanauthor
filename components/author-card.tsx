@@ -37,19 +37,17 @@ export default function AuthorCard({ author, showGrantRing }: Props) {
               background: "rgba(255,255,255,.6)", padding: "4px 8px", borderRadius: 4,
             }}>Author photo</span>
           )}
-          {author.founding_author && (
-            <div className="badge badge-founding" style={{ position: "absolute", top: 10, left: 10, fontSize: 11 }}>
-              ✦ Founding Author
-            </div>
-          )}
-          {hasGrant && (
-            <div className="badge badge-grant" style={{ position: "absolute", top: author.founding_author ? 40 : 10, left: 10, fontSize: 11 }}>
-              ★ Grant visit
-            </div>
-          )}
-          {author.within_local_zone && (
-            <div className="badge" style={{ position: "absolute", bottom: 10, left: 10, fontSize: 11, background: "var(--green)", color: "#fff" }}>
-              ✓ Local · no travel fee
+          {(author.founding_author || hasGrant || author.within_local_zone) && (
+            <div style={{ position: "absolute", bottom: 10, left: 10, right: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {author.founding_author && (
+                <div className="badge badge-founding" style={{ fontSize: 11 }}>✦ Founding Author</div>
+              )}
+              {hasGrant && (
+                <div className="badge badge-grant" style={{ fontSize: 11 }}>★ Grant visit</div>
+              )}
+              {author.within_local_zone && (
+                <div className="badge" style={{ fontSize: 11, background: "var(--green)", color: "#fff" }}>✓ Local · no travel fee</div>
+              )}
             </div>
           )}
           {/* Save button */}
