@@ -8,9 +8,17 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.4";
+export const CURRENT_VERSION = "0.6.5";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.5",
+    date: "2026-08-06",
+    changes: [
+      "New authors can now add all their books (up to 10) and upload cover images during profile setup — no longer just the one book from their application.",
+      "The setup wizard pre-fills the book from the application, and the rest can be added before publishing.",
+    ],
+  },
   {
     version: "0.6.4",
     date: "2026-07-16",

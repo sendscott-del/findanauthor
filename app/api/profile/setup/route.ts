@@ -9,6 +9,38 @@ function splitCSV(val: string) {
   return val.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
+const MAX_BOOKS = 10;
+const BOOK_TYPES = ["picture_book", "middle_grade", "young_adult", "nonfiction"];
+
+function sanitizeBooks(raw: unknown) {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((b) => (b ?? {}) as Record<string, unknown>)
+    .map((b) => {
+      const title = String(b.title ?? "").trim();
+      const publisher = String(b.publisher ?? "").trim();
+      const isbn = String(b.isbn ?? "").trim();
+      const yearNum = parseInt(String(b.year ?? ""), 10);
+      const color = String(b.cover_color ?? "");
+      const coverUrl = String(b.cover_url ?? "").trim();
+      const type = BOOK_TYPES.includes(String(b.type)) ? String(b.type) : "picture_book";
+      const book: Record<string, unknown> = {
+        title,
+        cover_color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#e85d04",
+        type,
+      };
+      if (publisher) book.publisher = publisher;
+      if (isbn) book.isbn = isbn;
+      if (Number.isFinite(yearNum) && yearNum > 0) book.year = yearNum;
+      if (/^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/public\//i.test(coverUrl)) {
+        book.cover_url = coverUrl;
+      }
+      return book;
+    })
+    .filter((b) => (b.title as string).length > 0)
+    .slice(0, MAX_BOOKS);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { token, form, tokenData } = await req.json();
@@ -67,7 +99,10 @@ export async function POST(req: NextRequest) {
       languages: splitCSV(form.languages || "English"),
       genres: splitCSV(form.genres),
       themes: splitCSV(form.themes),
-      books: app.book_title ? [{ title: app.book_title, publisher: app.publisher, isbn: app.isbn, cover_color: "#e85d04" }] : [],
+      // Books the author entered during setup; fall back to the single book from their application.
+      books: sanitizeBooks(form.books).length
+        ? sanitizeBooks(form.books)
+        : (app.book_title ? [{ title: app.book_title, publisher: app.publisher, isbn: app.isbn, cover_color: "#e85d04", type: "picture_book" }] : []),
       status: "active",
     }, { onConflict: "slug" });
 

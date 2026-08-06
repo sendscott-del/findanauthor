@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import BookCover from "@/components/book-cover";
 
 type Step = "loading" | "invalid" | "expired" | "done" | 1 | 2 | 3;
 
@@ -11,6 +12,16 @@ const FORMAT_OPTIONS = [
   { value: "virtual", label: "Virtual" },
 ];
 
+const MAX_BOOKS = 10;
+const COVER_COLORS = ["#E8743B", "#2E8B6F", "#3A5A8C", "#E2A93B", "#7C6A9C", "#CE5C26", "#226C56", "#B84A4A"];
+const BOOK_TYPES = [
+  { value: "picture_book", label: "Picture book" },
+  { value: "middle_grade", label: "Middle grade" },
+  { value: "young_adult", label: "Young adult" },
+  { value: "nonfiction", label: "Nonfiction" },
+];
+type BookRow = { title: string; publisher: string; year: string; isbn: string; cover_color: string; cover_url: string; type: string };
+
 export default function ProfileSetupPage() {
   const { token } = useParams<{ token: string }>();
   const [step, setStep] = useState<Step>("loading");
@@ -19,6 +30,7 @@ export default function ProfileSetupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [uploading, setUploading] = useState(false);
+  const [bookUploading, setBookUploading] = useState<number | null>(null);
   const [form, setForm] = useState({
     // Step 1 — Bio & photo
     tagline: "",
@@ -40,6 +52,7 @@ export default function ProfileSetupPage() {
     languages: "English",
     genres: "",
     themes: "",
+    books: [] as BookRow[],
   });
 
   function set(field: string, value: any) {
@@ -71,6 +84,38 @@ export default function ProfileSetupPage() {
     });
   }
 
+  function addBook() {
+    setForm((prev) => {
+      if (prev.books.length >= MAX_BOOKS) return prev;
+      const color = COVER_COLORS[prev.books.length % COVER_COLORS.length];
+      const next: BookRow = { title: "", publisher: "", year: "", isbn: "", cover_color: color, cover_url: "", type: "picture_book" };
+      return { ...prev, books: [...prev.books, next] };
+    });
+  }
+  function removeBook(idx: number) {
+    setForm((prev) => ({ ...prev, books: prev.books.filter((_, i) => i !== idx) }));
+  }
+  function updateBook(idx: number, field: keyof BookRow, value: string) {
+    setForm((prev) => ({ ...prev, books: prev.books.map((b, i) => (i === idx ? { ...b, [field]: value } : b)) }));
+  }
+  async function handleBookCoverUpload(idx: number, file: File | undefined) {
+    if (!file) return;
+    setBookUploading(idx);
+    setErrors((e) => ({ ...e, books: "" }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload-photo", { method: "POST", body: fd });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      updateBook(idx, "cover_url", json.url);
+    } catch (err: any) {
+      setErrors((e) => ({ ...e, books: err.message || "Cover upload failed" }));
+    } finally {
+      setBookUploading(null);
+    }
+  }
+
   useEffect(() => {
     async function verifyToken() {
       const res = await fetch(`/api/profile/verify-token?token=${token}`);
@@ -93,6 +138,17 @@ export default function ProfileSetupPage() {
           grant_visits_per_year: String(json.application.grant_visits_per_year ?? 3),
           offers_title1_subsidy: json.application.offers_title1_subsidy ?? false,
           offers_free_virtual_qa: json.application.offers_free_virtual_qa ?? false,
+          books: json.application.book_title
+            ? [{
+                title: json.application.book_title,
+                publisher: json.application.publisher ?? "",
+                year: "",
+                isbn: json.application.isbn ?? "",
+                cover_color: COVER_COLORS[0],
+                cover_url: "",
+                type: "picture_book",
+              }]
+            : [],
         }));
       }
       setStep(1);
@@ -383,6 +439,71 @@ export default function ProfileSetupPage() {
               <span style={{ display: "block", fontWeight: 700, marginBottom: 5, fontSize: 14 }}>Themes in your books</span>
               <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} placeholder="Family, Culture, Friendship, Identity…" value={form.themes} onChange={(e) => set("themes", e.target.value)} />
             </label>
+
+            {/* Books */}
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>Your books</span>
+                <span style={{ fontSize: 12.5, color: "var(--ink-faint)", fontWeight: 700 }}>{form.books.length} of {MAX_BOOKS}</span>
+              </div>
+              <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 0, marginBottom: 12 }}>
+                Add up to {MAX_BOOKS} of your books. Upload each cover, or pick a color if you don&apos;t have the image handy. You can always edit these later from your dashboard.
+              </p>
+
+              <div style={{ display: "grid", gap: 12 }}>
+                {form.books.map((book, idx) => (
+                  <div key={idx} style={{ border: "1.5px solid var(--line)", borderRadius: 12, padding: 14, background: "var(--paper)", display: "flex", gap: 14 }}>
+                    {/* Cover preview + upload */}
+                    <div style={{ width: 72, flexShrink: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <BookCover color={book.cover_color} title={book.title} imageUrl={book.cover_url || undefined} />
+                      <label className="btn btn-ghost btn-sm" style={{ cursor: "pointer", fontSize: 11, padding: "5px 6px", textAlign: "center", lineHeight: 1.2 }}>
+                        {bookUploading === idx ? "Uploading…" : book.cover_url ? "Replace" : "Upload cover"}
+                        <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" style={{ display: "none" }} disabled={bookUploading !== null} onChange={(e) => handleBookCoverUpload(idx, e.target.files?.[0])} />
+                      </label>
+                      {book.cover_url && (
+                        <button type="button" onClick={() => updateBook(idx, "cover_url", "")} style={{ background: "none", border: "none", color: "var(--ink-faint)", fontSize: 11, cursor: "pointer", textDecoration: "underline", padding: 0 }}>
+                          Remove cover
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0, display: "grid", gap: 10 }}>
+                      <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} value={book.title} onChange={(e) => updateBook(idx, "title", e.target.value)} placeholder="Book title" />
+                      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 10 }}>
+                        <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} value={book.publisher} onChange={(e) => updateBook(idx, "publisher", e.target.value)} placeholder="Publisher" />
+                        <input className="form-input" style={{ width: "100%", boxSizing: "border-box" }} inputMode="numeric" value={book.year} onChange={(e) => updateBook(idx, "year", e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="Year" />
+                      </div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, alignItems: "center" }}>
+                        <select className="form-input" style={{ width: "100%", boxSizing: "border-box" }} value={book.type} onChange={(e) => updateBook(idx, "type", e.target.value)}>
+                          {BOOK_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                        </select>
+                        <button type="button" onClick={() => removeBook(idx)} className="btn btn-ghost btn-sm" style={{ color: "#8a1c12", whiteSpace: "nowrap" }}>Remove</button>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: 12, color: "var(--ink-faint)", fontWeight: 700 }}>
+                          {book.cover_url ? "Cover color (shown if image removed)" : "Cover color"}
+                        </span>
+                        {COVER_COLORS.map((c) => (
+                          <button key={c} type="button" aria-label={`Cover color ${c}`} onClick={() => updateBook(idx, "cover_color", c)}
+                            style={{ width: 22, height: 22, borderRadius: "50%", background: c, cursor: "pointer", border: book.cover_color === c ? "3px solid var(--ink)" : "2px solid var(--line)" }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {form.books.length < MAX_BOOKS ? (
+                <button type="button" onClick={addBook} className="btn btn-ghost btn-sm" style={{ marginTop: 12 }}>
+                  + Add {form.books.length === 0 ? "a book" : "another book"}
+                </button>
+              ) : (
+                <p style={{ fontSize: 12.5, color: "var(--ink-faint)", marginTop: 12 }}>
+                  You&apos;ve reached the {MAX_BOOKS}-book limit.
+                </p>
+              )}
+              {errors.books && <p style={{ color: "var(--orange-deep)", fontSize: 13, marginTop: 8 }}>{errors.books}</p>}
+            </div>
 
             {errors._ && (
               <p style={{ color: "var(--orange-deep)", fontSize: 14, fontWeight: 600 }}>{errors._}</p>
