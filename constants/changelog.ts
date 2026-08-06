@@ -21,21 +21,21 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "0.6.4",
-    date: "2026-07-16",
+    date: "2026-08-06",
     changes: [
       "Moved the badges on author cards (landing page + directory) to the bottom of the photo too, so they no longer cover faces.",
     ],
   },
   {
     version: "0.6.3",
-    date: "2026-07-16",
+    date: "2026-08-06",
     changes: [
       "Moved the Founding Author and grant-visit badges to the bottom of the author profile photo so they no longer cover faces.",
     ],
   },
   {
     version: "0.6.2",
-    date: "2026-07-16",
+    date: "2026-08-06",
     changes: [
       "Removed the sample/placeholder authors and demo book covers — the site now shows only real author profiles.",
       "Directory, homepage featured authors, and the book carousel are real-data only (no seed fallback).",
@@ -44,7 +44,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "0.6.1",
-    date: "2026-07-16",
+    date: "2026-08-06",
     changes: [
       "Authors can upload a real cover image for each book (up to 10) from the dashboard; the styled color cover stays as a fallback when no image is uploaded.",
       "Uploaded covers show on the public profile, directory cards, and the homepage book carousel.",
@@ -52,7 +52,7 @@ export const changelog: ChangelogEntry[] = [
   },
   {
     version: "0.6.0",
-    date: "2026-07-16",
+    date: "2026-08-06",
     changes: [
       "Authors can now add up to 10 books on their profile — add, edit, reorder-by-remove, pick a cover color, and set the book type, all from the dashboard.",
       "Founding Author status: admins can grant it from the new Authors admin page (/admin/authors).",
