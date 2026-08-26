@@ -193,7 +193,7 @@ export default async function Home() {
                 {[
                   ["✓ Published", "Traditional houses"],
                   ["✓ Visit experience", "Vetted for schools"],
-                  ["✓ Background checked", "Before listing"],
+                  ["✓ Team verified", "Publisher & our team"],
                 ].map(([label, sub]) => (
                   <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid var(--line-soft)" }}>
                     <span style={{ fontWeight: 700, fontSize: 14, color: "var(--green-deep)" }}>{label}</span>

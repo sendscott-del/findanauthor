@@ -285,7 +285,7 @@ export default async function AuthorProfile({ params }: { params: Promise<{ slug
             <button className="btn btn-ghost btn-block" style={{ marginBottom: 16 }}>♡ Save to shortlist</button>
 
             <div style={{ textAlign: "center", fontSize: 12.5, color: "var(--green-deep)", fontWeight: 700 }}>
-              ✓ Background-checked &amp; publisher-verified
+              ✓ Publisher-verified &amp; vetted by our team
             </div>
           </div>
         </div>

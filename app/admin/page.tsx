@@ -51,7 +51,7 @@ export default async function AdminPage() {
           Applications are auto-checked against a traditional publisher list on submission.
           The <code style={{ background: "rgba(0,0,0,.08)", padding: "2px 6px", borderRadius: 4 }}>auto_check_passed</code> flag
           is set automatically — applications that pass still need human review before activation.
-          Background check links are sent via email on approval.
+          Profile setup links are sent via email on approval.
         </p>
       </div>
 

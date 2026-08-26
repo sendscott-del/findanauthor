@@ -98,7 +98,6 @@ export interface AuthorApplication {
   isbn?: string;
   years_visiting_schools: number;
   school_visit_references?: string;
-  background_check_consent: boolean;
   why_join: string;
   status: ApplicationStatus;
   auto_check_passed?: boolean;

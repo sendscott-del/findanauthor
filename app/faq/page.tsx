@@ -20,7 +20,7 @@ const EDUCATOR_FAQS: [string, React.ReactNode][] = [
   ],
   [
     "How do we know the authors on this site are safe and appropriate for our students?",
-    "Every author on our platform is traditionally published through established publishing houses, meaning their work has undergone professional editorial, legal, and educational vetting. They also undergo a background check when they apply to be featured on findanauthor.org. However, schools are always encouraged to perform their standard district-mandated background checks and clearances with the individual author during the contract process.",
+    "Every author on our platform is traditionally published through established publishing houses, meaning their work has undergone professional editorial, legal, and educational vetting, and is verified by the Writers for Readers team before being listed. Schools are always encouraged to perform their standard district-mandated background checks and clearances with the individual author during the contract process.",
   ],
 ];
 

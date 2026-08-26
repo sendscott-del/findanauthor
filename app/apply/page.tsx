@@ -17,7 +17,6 @@ export default function ApplyPage() {
     website_url: "", amazon_url: "",
     book_title: "", publisher: "", isbn: "",
     years_visiting: "", school_visit_references: "",
-    background_check_consent: false,
     why_join: "",
     // auto-fetched fields
     fetched_bio: "", fetched_genres: [] as string[],
@@ -70,7 +69,6 @@ export default function ApplyPage() {
     }
     if (s === 2) {
       if (!form.years_visiting) e.years_visiting = "Required";
-      if (!form.background_check_consent) e.background_check = "Required to join";
       if (!form.why_join) e.why_join = "Required";
     }
     setErrors(e);
@@ -148,7 +146,7 @@ export default function ApplyPage() {
               {[
                 { icon: <BookOpen size={22} />, color: "var(--blue)", title: "Traditionally published", body: "We verify your publisher against a curated list of traditional publishers. Self-published titles aren't eligible — this protects school trust." },
                 { icon: <Users size={22} />, color: "var(--orange)", title: "School visit experience", body: "You'll share how many schools you've visited and optionally provide references. New authors with limited visits can still qualify." },
-                { icon: <Shield size={22} />, color: "var(--green)", title: "Background check", body: "All authors complete a background check before being listed. We use a streamlined service — you'll get a link during onboarding." },
+                { icon: <Shield size={22} />, color: "var(--green)", title: "Publisher & team verified", body: "Every author is verified through their traditional publisher and reviewed by the Writers for Readers team before being listed." },
                 { icon: <Star size={22} />, color: "var(--gold)", title: "Ongoing quality", body: "Schools leave feedback after visits. Authors with consistently low ratings are reviewed. The bar stays high for everyone." },
               ].map((item, i) => (
                 <div key={i} className="card" style={{ padding: 24 }}>
@@ -173,7 +171,7 @@ export default function ApplyPage() {
               ["What counts as traditionally published?", "A book published by a publisher that paid you an advance — major houses (Scholastic, HarperCollins, Penguin Random House, etc.) or respected independent publishers. Amazon KDP, IngramSpark self-pub, or pay-to-publish models are not eligible."],
               ["Can I set my own pricing?", "Yes. You control your rates for local, out-of-area, and virtual visits. You can also set the radius within which in-person visits are fee-free."],
               ["Do I have to offer free visits?", "No. The volunteer grant program is optional. Many authors choose to offer a few free visits per year to Title I or under-resourced schools — it's a powerful differentiator and a way to give back."],
-              ["How does the background check work?", "After your application is approved, we send you a link to a third-party background check service. The cost is covered by Writers for Readers."],
+              ["How are authors vetted?", "We verify that you're traditionally published through an established house, and our team reviews your profile before it goes live. Schools are always encouraged to complete their own district-mandated clearances with you during contracting."],
             ].map(([q, a]) => (
               <div key={q} style={{ padding: "18px 0", borderBottom: "1px solid var(--line)" }}>
                 <div style={{ fontWeight: 800, fontSize: 15.5, marginBottom: 6 }}>{q}</div>
@@ -363,7 +361,7 @@ export default function ApplyPage() {
 
       {formStep === 2 && (
         <div>
-          <h2 style={{ fontSize: 24, marginBottom: 22 }}>Vetting & background check</h2>
+          <h2 style={{ fontSize: 24, marginBottom: 22 }}>Vetting & verification</h2>
           <div style={{ display: "grid", gap: 22 }}>
             <div>
               <label className="form-label">Years visiting schools *</label>
@@ -385,15 +383,8 @@ export default function ApplyPage() {
               {fieldErr("why_join")}
             </div>
             <div style={{ background: "var(--blue-tint)", border: "1.5px solid var(--blue)", borderRadius: 16, padding: 20 }}>
-              <label style={{ display: "flex", gap: 12, cursor: "pointer", alignItems: "flex-start" }}>
-                <input type="checkbox" checked={form.background_check_consent} onChange={(e) => set("background_check_consent", e.target.checked)}
-                  style={{ width: 18, height: 18, accentColor: "var(--blue)", marginTop: 2 }} />
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--blue-deep)", marginBottom: 4 }}>✓ I consent to a background check</div>
-                  <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>After approval, you'll receive a link to complete a background check at no cost to you. This is required to be listed in the directory.</div>
-                </div>
-              </label>
-              {fieldErr("background_check")}
+              <div style={{ fontWeight: 800, fontSize: 15, color: "var(--blue-deep)", marginBottom: 4 }}>How we vet authors</div>
+              <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>Authors are vetted and verified through their traditional publisher and reviewed by the Writers for Readers team. Schools are encouraged to complete their own district-mandated clearances with you during contracting.</div>
             </div>
           </div>
         </div>
@@ -415,7 +406,6 @@ export default function ApplyPage() {
               ["Title I subsidized rates", form.offers_title1_subsidy ? "Yes" : "No"],
               ["Free virtual Q&A", form.offers_free_virtual_qa ? "Yes" : "No"],
               ["School experience", form.years_visiting],
-              ["Background check", form.background_check_consent ? "Consented" : "Not consented"],
             ].map(([label, value]) => (
               <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "9px 0", borderBottom: "1px solid var(--line-soft)", fontSize: 14 }}>
                 <span style={{ color: "var(--ink-faint)", fontWeight: 600 }}>{label}</span>
@@ -424,7 +414,7 @@ export default function ApplyPage() {
             ))}
           </div>
           <div style={{ background: "var(--orange-tint)", borderRadius: 14, padding: "14px 18px", fontSize: 14, color: "var(--orange-deep)", fontWeight: 600, marginBottom: 12 }}>
-            📋 After submission, our team will verify your publisher credentials (usually 3–5 business days) and send you a background check link.
+            📋 After submission, our team will verify your publisher credentials (usually 3–5 business days) and send you a link to set up your profile.
           </div>
         </div>
       )}

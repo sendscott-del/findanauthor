@@ -80,7 +80,7 @@ export default function AuthorDirectory() {
             Find the storyteller your students will love.
           </h1>
           <p style={{ color: "var(--ink-soft)", maxWidth: 520, marginBottom: 24, fontSize: 16 }}>
-            Every author here is traditionally published, school-visit-experienced, and background-checked.
+            Every author here is traditionally published, school-visit-experienced, and verified through their publisher and our team.
           </p>
           {/* Location search */}
           <form onSubmit={submitZip} style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>

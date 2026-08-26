@@ -8,9 +8,17 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.8";
+export const CURRENT_VERSION = "0.6.9";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.9",
+    date: "2026-08-06",
+    changes: [
+      "Updated our vetting language across the site: authors are vetted and verified through their traditional publisher and the Writers for Readers team — removed all references to Writers for Readers running background checks.",
+      "The application no longer asks authors to consent to a background check; schools are still encouraged to complete their own district-mandated clearances during contracting.",
+    ],
+  },
   {
     version: "0.6.8",
     date: "2026-08-06",

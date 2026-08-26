@@ -39,7 +39,6 @@ export async function POST(req: NextRequest) {
       isbn: body.isbn ?? null,
       years_visiting: body.years_visiting,
       school_visit_references: body.school_visit_references ?? null,
-      background_check_consent: body.background_check_consent,
       why_join: body.why_join,
       visit_formats: body.visit_formats ?? [],
       grades: body.grades ?? [],
