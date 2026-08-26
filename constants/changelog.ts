@@ -8,9 +8,17 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.5";
+export const CURRENT_VERSION = "0.6.6";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.6",
+    date: "2026-08-06",
+    changes: [
+      "Admin Visit Requests now shows the full request: which author was requested, the grant justification, prep plan, staff lead, success hopes, dates, themes, and notes — not just the school and email.",
+      "Grant requests highlight the 'why they need a free visit' reason up front, with a one-click reply-to link.",
+    ],
+  },
   {
     version: "0.6.5",
     date: "2026-08-06",
