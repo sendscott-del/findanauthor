@@ -8,9 +8,16 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.6";
+export const CURRENT_VERSION = "0.6.7";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.7",
+    date: "2026-08-06",
+    changes: [
+      "Fixed an error that made the admin Visit Requests page fail to load when a request's school-type value wasn't a list.",
+    ],
+  },
   {
     version: "0.6.6",
     date: "2026-08-06",

@@ -20,6 +20,13 @@ function prettySlug(slug?: string | null) {
   return slug.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 }
 
+/** Safely join a value that may be an array, a string, or missing. */
+function list(v?: unknown): string {
+  if (Array.isArray(v)) return v.filter(Boolean).join(", ");
+  if (typeof v === "string") return v;
+  return "";
+}
+
 /** Render a labeled block only when the value is present. */
 function Field({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null;
@@ -61,7 +68,7 @@ export default async function AdminRequests() {
                     <div style={{ fontWeight: 800, fontSize: 16 }}>{r.school_name}</div>
                     <div style={{ fontSize: 14, color: "var(--ink-soft)" }}>{r.requester_name} · {r.requester_role} · {r.requester_email}</div>
                     <div style={{ fontSize: 13.5, marginTop: 4, color: "var(--ink-faint)" }}>
-                      {r.school_city}{r.school_state ? `, ${r.school_state}` : ""} · {r.visit_kind} · Grade{r.grades?.length === 1 ? "" : "s"} {r.grades?.join(", ")}
+                      {r.school_city}{r.school_state ? `, ${r.school_state}` : ""} · {r.visit_kind}{list(r.grades) ? ` · Grades ${list(r.grades)}` : ""}
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -108,8 +115,8 @@ export default async function AdminRequests() {
                     <Field label="Preferred dates" value={dateRange || undefined} />
                     <Field label="Approx. number of students" value={r.student_count ? String(r.student_count) : undefined} />
                     <Field label="Timing notes" value={r.timing_notes} />
-                    <Field label="Themes of interest" value={r.themes?.length ? r.themes.join(", ") : undefined} />
-                    <Field label="School type" value={r.school_type?.length ? r.school_type.join(", ") : undefined} />
+                    <Field label="Themes of interest" value={list(r.themes) || undefined} />
+                    <Field label="School type" value={list(r.school_type) || undefined} />
                     <Field label="School website" value={r.school_website} />
                     <Field label="Additional notes" value={r.notes} />
                     <Field label="Confirmed a staff lead will own the day" value={r.confirmed_staff_lead ? "Yes" : undefined} />
