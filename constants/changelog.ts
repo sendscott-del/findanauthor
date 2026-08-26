@@ -8,9 +8,17 @@ export type ChangelogEntry = {
   changes: string[];
 };
 
-export const CURRENT_VERSION = "0.6.7";
+export const CURRENT_VERSION = "0.6.8";
 
 export const changelog: ChangelogEntry[] = [
+  {
+    version: "0.6.8",
+    date: "2026-08-06",
+    changes: [
+      "Grant (free) visit requests now also email the requested author — with the school, the grant justification, prep plan, and success hopes — so they hear about it directly, not just the admin.",
+      "The author can reply straight to the email to reach the school (reply-to is set to the teacher).",
+    ],
+  },
   {
     version: "0.6.7",
     date: "2026-08-06",

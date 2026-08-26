@@ -35,9 +35,23 @@ export async function POST(req: NextRequest) {
     if (error) throw error;
 
     try {
-      const { sendRequestReceived } = await import("@/lib/email");
+      const { sendRequestReceived, sendGrantRequestToAuthor } = await import("@/lib/email");
       await sendRequestReceived(body.requester_name, body.requester_email, body.school_name);
-    } catch {}
+
+      // For grant requests aimed at a specific author, notify that author too.
+      if (body.budget_type === "grant" && body.author_id) {
+        const { data: author } = await supabase
+          .from("wfr_authors")
+          .select("name, email")
+          .eq("slug", body.author_id)
+          .maybeSingle();
+        if (author?.email) {
+          await sendGrantRequestToAuthor(author.name ?? "there", author.email, body);
+        }
+      }
+    } catch (e) {
+      console.error("request email error:", e);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
